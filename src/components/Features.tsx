@@ -4,6 +4,7 @@ interface Feature {
   icon: string;
   title: string;
   description: string;
+  logo?: string;
 }
 
 const features: Feature[] = [
@@ -15,7 +16,8 @@ const features: Feature[] = [
   {
     icon: '🔗',
     title: 'Nodo para N8N',
-    description: 'Integración completa con N8N para crear flujos de automatización avanzados. Conecta QuickZap con cientos de aplicaciones y servicios.'
+    description: 'Integración completa con N8N para crear flujos de automatización avanzados. Conecta QuickZap con cientos de aplicaciones y servicios.',
+    logo: '/lovable-uploads/a0c1ddc7-6695-4255-98dc-100eed627db9.png'
   },
   {
     icon: '🎨',
@@ -86,8 +88,20 @@ const Features = () => {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="text-center mb-6">
-                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
+                <div className="relative mb-4 group-hover:scale-110 transition-transform duration-300">
+                  {feature.logo ? (
+                    <div className="flex items-center justify-center h-20">
+                      <img 
+                        src={feature.logo} 
+                        alt={`${feature.title} Logo`} 
+                        className="h-16 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-5xl mb-4">
+                      {feature.icon}
+                    </div>
+                  )}
                 </div>
                 
                 <h3 className="text-xl font-bold mb-4 text-gray-900 leading-tight">
@@ -112,19 +126,31 @@ const Features = () => {
               }`}
               style={{ animationDelay: `${(index + 3) * 0.1}s` }}
             >
-              <div className="text-center">
-                <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                
-                <h3 className="text-2xl font-black mb-6 text-gray-900 leading-tight">
-                  {feature.title}
-                </h3>
-                
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
-                  {feature.description}
-                </p>
+            <div className="text-center">
+              <div className="relative mb-6 group-hover:scale-110 transition-transform duration-300">
+                {feature.logo ? (
+                  <div className="flex items-center justify-center h-24">
+                    <img 
+                      src={feature.logo} 
+                      alt={`${feature.title} Logo`} 
+                      className="h-20 object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-6xl mb-6">
+                    {feature.icon}
+                  </div>
+                )}
               </div>
+              
+              <h3 className="text-2xl font-black mb-6 text-gray-900 leading-tight">
+                {feature.title}
+              </h3>
+              
+              <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                {feature.description}
+              </p>
+            </div>
             </div>
           ))}
         </div>

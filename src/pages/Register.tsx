@@ -54,98 +54,26 @@ const Register = () => {
               </CardHeader>
               
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-medium">
-                        Nombre Completo *
-                      </Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="h-12"
-                        placeholder="Tu nombre completo"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">
-                        Email Corporativo *
-                      </Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="h-12"
-                        placeholder="tu@empresa.com"
-                      />
-                    </div>
-                  </div>
+                <div
+                  id="whop-embedded-checkout"
+                  data-whop-checkout-plan-id="plan_GuRmD70Tb9Pj0"
+                  data-whop-checkout-theme="light"
+                  data-whop-checkout-hide-price="false"
+                  style={{ height: 'fit-content', overflow: 'hidden', maxWidth: '560px', margin: '0 auto' }}
+                ></div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="company" className="text-sm font-medium">
-                        Empresa *
-                      </Label>
-                      <Input
-                        id="company"
-                        name="company"
-                        type="text"
-                        required
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        className="h-12"
-                        placeholder="Nombre de tu empresa"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-medium">
-                        Teléfono
-                      </Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="h-12"
-                        placeholder="+1 (555) 000-0000"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-4">
-                    <Button
-                      type="submit"
-                      variant="whatsapp"
-                      size="xl"
-                      className="w-full h-14 text-lg font-bold shadow-whatsapp hover:shadow-whatsapp-hover"
-                    >
-                      Comenzar Prueba Gratuita 🚀
-                    </Button>
-                  </div>
-
-                  <div className="text-center text-sm text-muted-foreground">
-                    <p>
-                      Al registrarte, aceptas nuestros{' '}
-                      <a href="#" className="text-whatsapp hover:underline">
-                        Términos de Servicio
-                      </a>{' '}
-                      y{' '}
-                      <a href="#" className="text-whatsapp hover:underline">
-                        Política de Privacidad
-                      </a>
-                    </p>
-                  </div>
-                </form>
+                <div className="text-center text-sm text-muted-foreground mt-6">
+                  <p>
+                    Al registrarte, aceptas nuestros{' '}
+                    <a href="#" className="text-whatsapp hover:underline">
+                      Términos de Servicio
+                    </a>{' '}
+                    y{' '}
+                    <a href="#" className="text-whatsapp hover:underline">
+                      Política de Privacidad
+                    </a>
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
@@ -187,6 +115,17 @@ const Register = () => {
       </section>
       
       <Footer />
+      
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.onCheckoutComplete = function(planId, receiptId) {
+              console.log("Checkout completado:", planId, receiptId);
+              window.location.href = "https://www.uscaleup.ai/";
+            };
+          `
+        }}
+      />
     </main>
   );
 };

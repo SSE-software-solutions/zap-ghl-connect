@@ -75,20 +75,25 @@ const ValueProposition = () => {
           {/* Right Content - QR Code Visual */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              {/* Real QR Code */}
+              {/* Real QR Code with styling */}
               <div className="relative transform hover:scale-105 transition-transform duration-500">
-                <img 
-                  src="/lovable-uploads/c5a02439-5dea-4f52-9be5-70d4fefc3eb0.png" 
-                  alt="Código QR para conectar WhatsApp" 
-                  className="w-80 h-80 object-contain drop-shadow-2xl"
-                />
+                {/* QR Code Container with gradient background */}
+                <div className="w-80 h-80 bg-gradient-to-br from-whatsapp via-green-400 to-blue-400 rounded-3xl flex items-center justify-center shadow-2xl p-8">
+                  <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center p-4">
+                    <img 
+                      src="/lovable-uploads/477492c2-560f-45bf-a930-3280b63eb02e.png" 
+                      alt="Código QR para conectar WhatsApp con QuickZap" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
               </div>
               
               {/* Floating Elements */}
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-whatsapp rounded-full flex items-center justify-center text-white text-sm animate-pulse shadow-lg">
+              <div className="absolute -top-4 -right-4 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center text-white text-xl animate-bounce shadow-lg">
                 ⚡
               </div>
-              <div className="absolute -bottom-2 -left-2 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg animate-bounce shadow-lg">
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl animate-pulse shadow-lg">
                 📲
               </div>
             </div>

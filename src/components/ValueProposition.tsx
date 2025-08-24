@@ -17,15 +17,40 @@ const ValueProposition = () => {
   };
 
   return (
-    <section className="py-20 bg-white text-gray-900">
-      <div className="container mx-auto px-4">
+    <section className="py-20 bg-white text-gray-900 relative">
+      {/* WhatsApp Logo Decoration */}
+      <div className="absolute top-20 left-8 opacity-10 hidden lg:block">
+        <img 
+          src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+          alt="WhatsApp Logo" 
+          className="w-32 h-32 object-contain"
+        />
+      </div>
+      
+      <div className="absolute bottom-20 right-8 opacity-10 hidden lg:block">
+        <img 
+          src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+          alt="WhatsApp Logo" 
+          className="w-24 h-24 object-contain transform rotate-12"
+        />
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Content */}
           <div className="space-y-12">
             {/* Stop Paying Section */}
             <div className="space-y-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-whatsapp via-blue-400 to-blue-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl">
+              <div className="w-20 h-20 bg-gradient-to-br from-whatsapp via-blue-400 to-blue-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl relative">
                 📱
+                {/* Small WhatsApp logo on icon */}
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
+                  <img 
+                    src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+                    alt="WhatsApp" 
+                    className="w-5 h-5 object-contain"
+                  />
+                </div>
               </div>
               
               <div>
@@ -90,8 +115,12 @@ const ValueProposition = () => {
               </div>
               
               {/* Floating Elements */}
-              <div className="absolute -top-4 -right-4 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center text-white text-xl animate-bounce shadow-lg">
-                ⚡
+              <div className="absolute -top-4 -right-4 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center shadow-lg">
+                <img 
+                  src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+                  alt="WhatsApp" 
+                  className="w-6 h-6 object-contain animate-bounce"
+                />
               </div>
               <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl animate-pulse shadow-lg">
                 📲

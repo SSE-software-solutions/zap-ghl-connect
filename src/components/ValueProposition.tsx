@@ -75,28 +75,20 @@ const ValueProposition = () => {
           {/* Right Content - QR Code Visual */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              {/* QR Code Mockup */}
-              <div className="w-64 h-64 bg-gradient-to-br from-whatsapp via-green-400 to-blue-400 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <div className="w-48 h-48 bg-white rounded-2xl flex items-center justify-center">
-                  <div className="grid grid-cols-8 gap-1 w-40 h-40">
-                    {/* QR Code Pattern */}
-                    {Array.from({ length: 64 }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`${
-                          Math.random() > 0.5 ? 'bg-gray-900' : 'bg-transparent'
-                        } rounded-sm`}
-                      />
-                    ))}
-                  </div>
-                </div>
+              {/* Real QR Code */}
+              <div className="relative transform hover:scale-105 transition-transform duration-500">
+                <img 
+                  src="/lovable-uploads/c5a02439-5dea-4f52-9be5-70d4fefc3eb0.png" 
+                  alt="Código QR para conectar WhatsApp" 
+                  className="w-80 h-80 object-contain drop-shadow-2xl"
+                />
               </div>
               
               {/* Floating Elements */}
-              <div className="absolute -top-4 -right-4 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center text-white text-xl animate-bounce shadow-lg">
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-whatsapp rounded-full flex items-center justify-center text-white text-sm animate-pulse shadow-lg">
                 ⚡
               </div>
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl animate-pulse shadow-lg">
+              <div className="absolute -bottom-2 -left-2 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg animate-bounce shadow-lg">
                 📲
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 
@@ -73,6 +74,7 @@ const plans: PricingPlan[] = [
 const Pricing = () => {
   const [visibleCards, setVisibleCards] = useState<number[]>([]);
   const sectionRef = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -139,6 +141,7 @@ const Pricing = () => {
               <Button
                 variant={plan.featured ? "whatsapp" : "whatsapp-outline"}
                 className="w-full mb-8 h-12"
+                onClick={() => navigate('/register')}
               >
                 {plan.buttonText}
               </Button>

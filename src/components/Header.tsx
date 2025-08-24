@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from './LanguageSelector';
@@ -6,6 +7,7 @@ import LanguageSelector from './LanguageSelector';
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,7 +60,7 @@ const Header = () => {
             <Button
               variant="whatsapp"
               size="lg"
-              onClick={() => scrollToSection('pricing')}
+              onClick={() => navigate('/register')}
               className="shadow-whatsapp hover:shadow-whatsapp-hover"
             >
               {t('header.cta')}

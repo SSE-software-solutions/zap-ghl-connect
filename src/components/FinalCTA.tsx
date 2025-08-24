@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const FinalCTA = () => {
+  const navigate = useNavigate();
+  
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -29,7 +32,7 @@ const FinalCTA = () => {
             <Button
               variant="hero-white"
               size="xl"
-              onClick={() => scrollToSection('pricing')}
+              onClick={() => navigate('/register')}
               className="shadow-xl hover:shadow-2xl"
             >
               Comenzar Prueba Gratuita

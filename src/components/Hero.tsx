@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import ChatMockup from './ChatMockup';
@@ -6,6 +7,7 @@ import ChatMockup from './ChatMockup';
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
@@ -44,7 +46,7 @@ const Hero = () => {
               <Button
                 variant="hero"
                 size="xl"
-                onClick={() => scrollToSection('pricing')}
+                onClick={() => navigate('/register')}
                 className="shadow-whatsapp hover:shadow-whatsapp-hover"
               >
                 {t('hero.cta')}

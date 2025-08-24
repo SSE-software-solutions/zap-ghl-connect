@@ -37,8 +37,12 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-whatsapp rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-whatsapp">
-              ⚡
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/b6192fd9-a58b-4a50-bd2a-809422896d69.png" 
+                alt="QuickZap Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="text-2xl font-black text-whatsapp tracking-tight">
               QUICKZAP

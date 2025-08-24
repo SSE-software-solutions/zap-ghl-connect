@@ -17,26 +17,56 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try {
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const url = `${sanitizedBase}/api/auth/login`;
 
-    // Simulate API call delay
-    setTimeout(() => {
-      if (email && password) {
-        // Mock successful login - bypass authentication
-        localStorage.setItem('auth_token', 'mock_token_123');
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido al panel de cliente",
-        });
-        navigate('/dashboard');
-      } else {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = (data && (data.message || data.error || data.detail)) || 'Usuario o contraseña inválidos';
         toast({
           title: "Error de autenticación",
-          description: "Usuario o contraseña inválidos",
+          description: message,
           variant: "destructive",
         });
+        return;
       }
+
+      const token = data?.token || data?.access_token || data?.accessToken || data?.jwt || data?.data?.token;
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "La respuesta del servidor no contiene un token",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      localStorage.setItem('auth_token', String(token));
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Bienvenido al panel de cliente",
+      });
+      navigate('/dashboard');
+    } catch (err) {
+      toast({
+        title: "Error de red",
+        description: "No se pudo conectar con el servidor. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

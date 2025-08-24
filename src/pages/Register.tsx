@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { WhopCheckoutEmbed } from '@whop/react/checkout';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -33,7 +31,13 @@ const Register = () => {
               </CardHeader>
               
               <CardContent>
-                <WhopCheckoutEmbed planId="plan_GuRmD70Tb9Pj0" />
+                <div
+                  id="whop-embedded-checkout"
+                  data-whop-checkout-plan-id="plan_GuRmD70Tb9Pj0"
+                  data-whop-checkout-theme="light"
+                  data-whop-checkout-hide-price="false"
+                  style={{ height: 'fit-content', overflow: 'hidden', maxWidth: '560px', margin: '0 auto' }}
+                />
 
                 <div className="text-center text-sm text-muted-foreground mt-6">
                   <p>
@@ -88,6 +92,17 @@ const Register = () => {
       </section>
       
       <Footer />
+      
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.onCheckoutComplete = function(planId, receiptId) {
+              console.log("Checkout completado:", planId, receiptId);
+              window.location.href = "https://www.uscaleup.ai/";
+            };
+          `
+        }}
+      />
     </main>
   );
 };

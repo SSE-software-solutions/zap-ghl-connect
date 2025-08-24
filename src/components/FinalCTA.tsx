@@ -22,7 +22,7 @@ const FinalCTA = () => {
           </h2>
           
           <p className="text-xl md:text-2xl opacity-90 font-medium">
-            Únete a miles de empresas que ya están usando Enterprise para transformar su atención al cliente
+            Únete a miles de empresas que ya están usando QuickZap para transformar su atención al cliente
           </p>
 
           <div className="pt-4">

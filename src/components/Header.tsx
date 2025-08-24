@@ -41,7 +41,7 @@ const Header = () => {
               ⚡
             </div>
             <div className="text-2xl font-black text-whatsapp tracking-tight">
-              ENTERPRISE
+              QUICKZAP
             </div>
           </div>
 

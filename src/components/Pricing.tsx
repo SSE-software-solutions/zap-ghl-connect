@@ -105,7 +105,7 @@ const Pricing = () => {
             Elige el Plan Perfecto para tu Negocio
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Sin sorpresas, sin costos ocultos. Paga una vez y aprovecha todo el poder de Enterprise
+            Sin sorpresas, sin costos ocultos. Paga una vez y aprovecha todo el poder de QuickZap
           </p>
         </div>
 

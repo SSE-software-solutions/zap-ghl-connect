@@ -15,7 +15,7 @@ const features: Feature[] = [
   {
     icon: '🔗',
     title: 'Nodo para N8N',
-    description: 'Integración completa con N8N para crear flujos de automatización avanzados. Conecta Enterprise con cientos de aplicaciones y servicios.'
+    description: 'Integración completa con N8N para crear flujos de automatización avanzados. Conecta QuickZap con cientos de aplicaciones y servicios.'
   },
   {
     icon: '🎨',
@@ -68,7 +68,7 @@ const Features = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 tracking-tight">
             Libera el Poder de la Automatización con{' '}
-            <span className="text-gradient-whatsapp">Enterprise</span>
+            <span className="text-gradient-whatsapp">QuickZap</span>
           </h2>
           <p className="text-xl text-whatsapp font-semibold max-w-4xl mx-auto">
             Simplifica, Conecta y Convierte: La revolución en comunicación empresarial está aquí

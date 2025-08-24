@@ -54,9 +54,16 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Language Selector and CTA Button */}
+          {/* Language Selector and Action Buttons */}
           <div className="flex items-center gap-4">
             <LanguageSelector />
+            <Button
+              variant="outline"
+              onClick={() => navigate('/login')}
+              className="border-whatsapp text-whatsapp hover:bg-whatsapp hover:text-white"
+            >
+              Login
+            </Button>
             <Button
               variant="whatsapp"
               size="lg"

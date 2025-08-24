@@ -24,70 +24,74 @@ const ValueProposition = () => {
           <div className="space-y-12">
             {/* Stop Paying Section */}
             <div className="space-y-8">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-whatsapp via-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 relative">
+              {/* Icon and Title Row */}
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-whatsapp via-green-400 to-blue-500 rounded-3xl flex items-center justify-center shadow-xl flex-shrink-0 relative">
                   📱
                   {/* WhatsApp badge */}
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-gray-100">
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-gray-100">
                     <img 
                       src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
                       alt="WhatsApp" 
-                      className="w-3.5 h-3.5 object-contain"
+                      className="w-4 h-4 object-contain"
                     />
                   </div>
                 </div>
                 
-                <div className="flex-1 flex items-center gap-4">
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-gray-900">
+                <div className="flex items-center gap-6 flex-1">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-gray-900 flex-1">
                     {t('value.stopPaying')}
                   </h2>
                   
-                  {/* WhatsApp Logo al costado - MÁS GRANDE */}
-                  <div className="flex-shrink-0 hidden md:block">
-                    <img 
-                      src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
-                      alt="WhatsApp Logo" 
-                      className="w-24 h-24 lg:w-32 lg:h-32 object-contain opacity-90 hover:opacity-100 transition-all duration-300 hover:scale-110"
-                    />
+                  {/* Large WhatsApp Logo */}
+                  <div className="flex-shrink-0 hidden lg:block">
+                    <div className="w-20 h-20 flex items-center justify-center">
+                      <img 
+                        src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
+                        alt="WhatsApp Logo" 
+                        className="w-16 h-16 object-contain hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4 pl-22">
-                <p className="text-lg text-gray-600 leading-relaxed">
+              {/* Description Text */}
+              <div className="space-y-6">
+                <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl">
                   {t('value.stopPayingDesc1')}
                 </p>
-                <p className="text-lg text-gray-600 leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl">
                   {t('value.stopPayingDesc2')}
                 </p>
               </div>
             </div>
 
             {/* QR Connection Section */}
-            <div className="space-y-6">
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black leading-tight text-gray-900">
+            <div className="space-y-8">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black leading-tight text-gray-900 max-w-4xl">
                 {t('value.connectTitle')}
               </h3>
-              <div className="space-y-4 text-gray-600">
-                <p className="text-lg leading-relaxed">
+              <div className="space-y-6">
+                <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl">
                   {t('value.connectDesc1')}
                 </p>
-                <p className="text-lg leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl">
                   {t('value.connectDesc2')}
                 </p>
               </div>
             </div>
 
             {/* CTA Button */}
-            <div className="pt-4">
+            <div className="pt-6">
               <Button
                 variant="hero"
                 size="xl"
                 onClick={() => scrollToSection('pricing')}
-                className="bg-gradient-to-r from-whatsapp to-green-500 hover:from-green-600 hover:to-whatsapp shadow-xl hover:shadow-2xl hover:shadow-whatsapp/30 transform hover:-translate-y-1 transition-all duration-300"
+                className="bg-gradient-to-r from-whatsapp to-green-500 hover:from-green-600 hover:to-whatsapp shadow-xl hover:shadow-2xl hover:shadow-whatsapp/30 transform hover:-translate-y-1 transition-all duration-300 text-lg"
               >
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg font-bold">{t('value.cta')}</span>
+                  <span className="font-bold">{t('value.cta')}</span>
                   <span className="text-sm opacity-90 font-medium">{t('value.ctaSubtext')}</span>
                 </div>
               </Button>

@@ -75,8 +75,9 @@ const Features = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {features.map((feature, index) => (
+        {/* Featured Cards - First 3 features */}
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+          {features.slice(0, 3).map((feature, index) => (
             <div
               key={index}
               className={`group bg-white p-8 rounded-3xl border border-gray-100 hover:border-whatsapp/20 transition-all duration-500 hover:shadow-card-hover hover:-translate-y-2 ${
@@ -84,17 +85,46 @@ const Features = () => {
               }`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                {feature.icon}
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                  {feature.icon}
+                </div>
+                
+                <h3 className="text-xl font-bold mb-4 text-gray-900 leading-tight">
+                  {feature.title}
+                </h3>
+                
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              
-              <h3 className="text-xl font-bold mb-4 text-gray-900 leading-tight">
-                {feature.title}
-              </h3>
-              
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Centered Main Features - Last 2 features */}
+        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+          {features.slice(3).map((feature, index) => (
+            <div
+              key={index + 3}
+              className={`group bg-gradient-to-br from-white to-whatsapp-light/10 p-10 rounded-3xl border-2 border-whatsapp/10 hover:border-whatsapp/30 transition-all duration-500 hover:shadow-whatsapp/20 hover:shadow-2xl hover:-translate-y-3 ${
+                visibleCards.includes(index + 3) ? 'animate-slide-up' : 'opacity-0'
+              }`}
+              style={{ animationDelay: `${(index + 3) * 0.1}s` }}
+            >
+              <div className="text-center">
+                <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                  {feature.icon}
+                </div>
+                
+                <h3 className="text-2xl font-black mb-6 text-gray-900 leading-tight">
+                  {feature.title}
+                </h3>
+                
+                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                  {feature.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>

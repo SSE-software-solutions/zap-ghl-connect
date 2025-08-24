@@ -17,47 +17,52 @@ const ValueProposition = () => {
   };
 
   return (
-    <section className="py-20 bg-white text-gray-900 relative">
-      {/* WhatsApp Logo Decoration */}
-      <div className="absolute top-20 left-8 opacity-10 hidden lg:block">
+    <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900 relative overflow-hidden">
+      {/* WhatsApp Logo Decorations - More subtle */}
+      <div className="absolute top-10 left-4 opacity-5 hidden lg:block">
         <img 
           src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
           alt="WhatsApp Logo" 
-          className="w-32 h-32 object-contain"
+          className="w-40 h-40 object-contain transform -rotate-12"
         />
       </div>
       
-      <div className="absolute bottom-20 right-8 opacity-10 hidden lg:block">
+      <div className="absolute bottom-10 right-4 opacity-5 hidden lg:block">
         <img 
           src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
           alt="WhatsApp Logo" 
-          className="w-24 h-24 object-contain transform rotate-12"
+          className="w-32 h-32 object-contain transform rotate-45"
         />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-20 items-center max-w-7xl mx-auto">
           {/* Left Content */}
           <div className="space-y-12">
             {/* Stop Paying Section */}
-            <div className="space-y-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-whatsapp via-blue-400 to-blue-500 rounded-2xl flex items-center justify-center text-3xl shadow-2xl relative">
-                📱
-                {/* Small WhatsApp logo on icon */}
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <img 
-                    src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
-                    alt="WhatsApp" 
-                    className="w-5 h-5 object-contain"
-                  />
+            <div className="space-y-8">
+              <div className="flex items-start gap-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-whatsapp via-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 relative">
+                  📱
+                  {/* WhatsApp badge */}
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-gray-100">
+                    <img 
+                      src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+                      alt="WhatsApp" 
+                      className="w-3.5 h-3.5 object-contain"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-gray-900">
+                    {t('value.stopPaying')}
+                  </h2>
                 </div>
               </div>
-              
-              <div>
-                <h2 className="text-3xl md:text-4xl font-black mb-4 leading-tight text-gray-900">
-                  {t('value.stopPaying')}
-                </h2>
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+
+              <div className="space-y-4 pl-22">
+                <p className="text-lg text-gray-600 leading-relaxed">
                   {t('value.stopPayingDesc1')}
                 </p>
                 <p className="text-lg text-gray-600 leading-relaxed">
@@ -68,7 +73,7 @@ const ValueProposition = () => {
 
             {/* QR Connection Section */}
             <div className="space-y-6">
-              <h3 className="text-2xl md:text-3xl font-black leading-tight text-gray-900">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-black leading-tight text-gray-900">
                 {t('value.connectTitle')}
               </h3>
               <div className="space-y-4 text-gray-600">
@@ -82,16 +87,16 @@ const ValueProposition = () => {
             </div>
 
             {/* CTA Button */}
-            <div>
+            <div className="pt-4">
               <Button
                 variant="hero"
                 size="xl"
                 onClick={() => scrollToSection('pricing')}
-                className="bg-gradient-to-r from-blue-500 to-whatsapp hover:from-blue-600 hover:to-whatsapp-dark shadow-2xl hover:shadow-blue-500/25"
+                className="bg-gradient-to-r from-whatsapp to-green-500 hover:from-green-600 hover:to-whatsapp shadow-xl hover:shadow-2xl hover:shadow-whatsapp/30 transform hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="flex flex-col items-center">
-                  <span>{t('value.cta')}</span>
-                  <span className="text-sm opacity-90">{t('value.ctaSubtext')}</span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-lg font-bold">{t('value.cta')}</span>
+                  <span className="text-sm opacity-90 font-medium">{t('value.ctaSubtext')}</span>
                 </div>
               </Button>
             </div>
@@ -99,32 +104,42 @@ const ValueProposition = () => {
 
           {/* Right Content - QR Code Visual */}
           <div className="flex justify-center lg:justify-end">
-            <div className="relative">
-              {/* Real QR Code with styling */}
-              <div className="relative transform hover:scale-105 transition-transform duration-500">
-                {/* QR Code Container with gradient background */}
-                <div className="w-80 h-80 bg-gradient-to-br from-whatsapp via-green-400 to-blue-400 rounded-3xl flex items-center justify-center shadow-2xl p-8">
-                  <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center p-4">
+            <div className="relative group">
+              {/* QR Code Container with enhanced styling */}
+              <div className="relative transform group-hover:scale-105 transition-all duration-500">
+                <div className="w-80 h-80 bg-gradient-to-br from-whatsapp via-green-400 to-blue-400 rounded-3xl flex items-center justify-center shadow-2xl p-6 relative overflow-hidden">
+                  {/* Subtle pattern overlay */}
+                  <div className="absolute inset-0 bg-white/5 rounded-3xl"></div>
+                  
+                  <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center p-4 relative z-10 shadow-inner">
                     <img 
                       src="/lovable-uploads/477492c2-560f-45bf-a930-3280b63eb02e.png" 
                       alt="Código QR para conectar WhatsApp con QuickZap" 
                       className="w-full h-full object-contain"
                     />
                   </div>
+                  
+                  {/* Corner accent */}
+                  <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full backdrop-blur-sm"></div>
+                  <div className="absolute bottom-4 left-4 w-6 h-6 bg-white/20 rounded-full backdrop-blur-sm"></div>
                 </div>
               </div>
               
-              {/* Floating Elements */}
-              <div className="absolute -top-4 -right-4 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center shadow-lg">
+              {/* Enhanced floating elements */}
+              <div className="absolute -top-3 -right-3 w-12 h-12 bg-whatsapp rounded-full flex items-center justify-center shadow-xl border-4 border-white animate-bounce">
                 <img 
                   src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
                   alt="WhatsApp" 
-                  className="w-6 h-6 object-contain animate-bounce"
+                  className="w-6 h-6 object-contain"
                 />
               </div>
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl animate-pulse shadow-lg">
+              
+              <div className="absolute -bottom-3 -left-3 w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xl animate-pulse shadow-xl border-4 border-white">
                 📲
               </div>
+              
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-whatsapp/20 via-transparent to-blue-500/20 rounded-3xl blur-xl opacity-50 -z-10 group-hover:opacity-70 transition-opacity duration-500"></div>
             </div>
           </div>
         </div>

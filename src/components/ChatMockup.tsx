@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   text: string;
@@ -6,15 +7,16 @@ interface Message {
   delay: number;
 }
 
-const messages: Message[] = [
-  { text: '¡Hola! Me interesa su producto', type: 'received', delay: 0 },
-  { text: '¡Perfecto! Te ayudo ahora mismo 😊', type: 'sent', delay: 1000 },
-  { text: '¿Cuáles son los precios?', type: 'received', delay: 2000 },
-  { text: 'Te envío toda la información completa...', type: 'sent', delay: 3000 },
-];
-
 const ChatMockup = () => {
   const [visibleMessages, setVisibleMessages] = useState<number>(0);
+  const { t } = useLanguage();
+
+  const messages: Message[] = [
+    { text: t('chat.message1'), type: 'received', delay: 0 },
+    { text: t('chat.message2'), type: 'sent', delay: 1000 },
+    { text: t('chat.message3'), type: 'received', delay: 2000 },
+    { text: t('chat.message4'), type: 'sent', delay: 3000 },
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,8 +45,8 @@ const ChatMockup = () => {
           👤
         </div>
         <div>
-          <h4 className="text-white font-semibold text-base">Cliente Potencial</h4>
-          <p className="text-white/80 text-sm">en línea</p>
+          <h4 className="text-white font-semibold text-base">{t('chat.contact')}</h4>
+          <p className="text-white/80 text-sm">{t('chat.online')}</p>
         </div>
       </div>
 

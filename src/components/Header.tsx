@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,15 +52,18 @@ const Header = () => {
             </div>
           </div>
 
-          {/* CTA Button */}
-          <Button
-            variant="whatsapp"
-            size="lg"
-            onClick={() => scrollToSection('pricing')}
-            className="shadow-whatsapp hover:shadow-whatsapp-hover"
-          >
-            Comenzar Gratis
-          </Button>
+          {/* Language Selector and CTA Button */}
+          <div className="flex items-center gap-4">
+            <LanguageSelector />
+            <Button
+              variant="whatsapp"
+              size="lg"
+              onClick={() => scrollToSection('pricing')}
+              className="shadow-whatsapp hover:shadow-whatsapp-hover"
+            >
+              {t('header.cta')}
+            </Button>
+          </div>
         </div>
       </div>
     </header>

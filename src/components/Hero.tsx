@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import ChatMockup from './ChatMockup';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setIsVisible(true);
@@ -29,14 +31,12 @@ const Hero = () => {
           <div className="lg:col-span-7 space-y-8">
             <div className={`space-y-6 ${isVisible ? 'animate-slide-left' : 'opacity-0'}`}>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight">
-                La nueva generación de integración{" "}
-                <span className="text-gradient-whatsapp">WhatsApp para GHL</span>
+                {t('hero.title')}{" "}
+                <span className="text-gradient-whatsapp">{t('hero.titleHighlight')}</span>
               </h1>
               
               <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed">
-                Conecta con <strong className="text-whatsapp">QR</strong>, maneja{" "}
-                <strong className="text-whatsapp">+10 números por subcuenta</strong>,{" "}
-                <strong className="text-whatsapp">mejores precios</strong>.
+                {t('hero.subtitle')}
               </p>
             </div>
 
@@ -47,12 +47,12 @@ const Hero = () => {
                 onClick={() => scrollToSection('pricing')}
                 className="shadow-whatsapp hover:shadow-whatsapp-hover"
               >
-                Prueba QuickZap Ahora & Gratis!
+                {t('hero.cta')}
               </Button>
             </div>
 
             <div className={`text-sm text-muted-foreground italic ${isVisible ? 'animate-slide-left' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-              ¡Solicita tu prueba gratuita de 5 días!
+              {t('hero.trial')}
             </div>
           </div>
 

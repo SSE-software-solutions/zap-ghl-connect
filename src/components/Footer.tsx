@@ -4,15 +4,15 @@ const Footer = () => {
       <div className="container mx-auto px-4 text-center">
         <div className="space-y-4">
           <p className="text-lg">
-            &copy; 2025 QuickZap. La revolución en integración WhatsApp para GoHighLevel.
+            &copy; 2025 Enterprise. La revolución en integración WhatsApp para GoHighLevel.
           </p>
           <p className="text-sm text-gray-400">
             Soporte:{' '}
             <a 
-              href="mailto:info@quickzap.com" 
+              href="mailto:info@enterprise.com" 
               className="text-whatsapp hover:text-whatsapp-light transition-colors"
             >
-              info@quickzap.com
+              info@enterprise.com
             </a>
             {' | '}
             WhatsApp:{' '}

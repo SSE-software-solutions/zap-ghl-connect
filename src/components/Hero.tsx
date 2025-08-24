@@ -47,7 +47,7 @@ const Hero = () => {
                 onClick={() => scrollToSection('pricing')}
                 className="shadow-whatsapp hover:shadow-whatsapp-hover"
               >
-                Prueba QuickZap Ahora & Gratis!
+                Prueba Enterprise Ahora & Gratis!
               </Button>
             </div>
 

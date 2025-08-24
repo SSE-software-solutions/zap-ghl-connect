@@ -18,23 +18,6 @@ const ValueProposition = () => {
 
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900 relative overflow-hidden">
-      {/* WhatsApp Logo Decorations - More subtle */}
-      <div className="absolute top-10 left-4 opacity-5 hidden lg:block">
-        <img 
-          src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
-          alt="WhatsApp Logo" 
-          className="w-40 h-40 object-contain transform -rotate-12"
-        />
-      </div>
-      
-      <div className="absolute bottom-10 right-4 opacity-5 hidden lg:block">
-        <img 
-          src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
-          alt="WhatsApp Logo" 
-          className="w-32 h-32 object-contain transform rotate-45"
-        />
-      </div>
-
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-center max-w-7xl mx-auto">
           {/* Left Content */}

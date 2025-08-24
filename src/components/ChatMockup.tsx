@@ -36,10 +36,10 @@ const ChatMockup = () => {
   }, [visibleMessages]);
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-sm w-full mx-auto">
+    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-sm w-full mx-auto border border-gray-100">
       {/* Chat Header */}
       <div className="bg-gradient-whatsapp p-4 flex items-center gap-3">
-        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white text-lg">
+        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white text-lg backdrop-blur-sm">
           👤
         </div>
         <div>
@@ -49,19 +49,21 @@ const ChatMockup = () => {
       </div>
 
       {/* Chat Messages */}
-      <div className="bg-whatsapp-chat p-5 min-h-[300px] flex flex-col gap-3">
+      <div className="bg-gray-50 p-5 min-h-[300px] flex flex-col gap-3">
         {messages.slice(0, visibleMessages).map((message, index) => (
           <div
             key={index}
-            className={`animate-message max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
+            className={`animate-message max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
               message.type === 'sent'
-                ? 'bg-whatsapp-sent self-end rounded-br-sm text-gray-700'
-                : 'bg-whatsapp-received self-start rounded-bl-sm text-gray-700'
+                ? 'bg-gradient-whatsapp text-white self-end rounded-br-sm'
+                : 'bg-white self-start rounded-bl-sm text-gray-700 border border-gray-100'
             }`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             {message.text}
-            <div className="text-xs text-gray-500 mt-1 text-right">
+            <div className={`text-xs mt-1 text-right ${
+              message.type === 'sent' ? 'text-white/80' : 'text-gray-400'
+            }`}>
               {new Date().toLocaleTimeString('es-ES', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
@@ -72,7 +74,7 @@ const ChatMockup = () => {
         
         {/* Typing indicator */}
         {visibleMessages < messages.length && visibleMessages > 0 && (
-          <div className="bg-whatsapp-received self-start rounded-2xl rounded-bl-sm p-3 max-w-[80%]">
+          <div className="bg-white self-start rounded-2xl rounded-bl-sm p-3 max-w-[80%] border border-gray-100 shadow-sm">
             <div className="flex gap-1">
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>

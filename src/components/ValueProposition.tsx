@@ -42,12 +42,12 @@ const ValueProposition = () => {
                     {t('value.stopPaying')}
                   </h2>
                   
-                  {/* WhatsApp Logo al costado */}
+                  {/* WhatsApp Logo al costado - MÁS GRANDE */}
                   <div className="flex-shrink-0 hidden md:block">
                     <img 
                       src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
                       alt="WhatsApp Logo" 
-                      className="w-16 h-16 object-contain opacity-80 hover:opacity-100 transition-opacity duration-300"
+                      className="w-24 h-24 lg:w-32 lg:h-32 object-contain opacity-90 hover:opacity-100 transition-all duration-300 hover:scale-110"
                     />
                   </div>
                 </div>

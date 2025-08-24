@@ -17,9 +17,6 @@ const Register = () => {
               <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
                 Comienza tu <span className="text-gradient-whatsapp">Prueba Gratuita</span>
               </h1>
-              <p className="text-xl text-muted-foreground">
-                5 días completamente gratis. Sin tarjeta requerida.
-              </p>
             </div>
 
             <Card className="shadow-2xl border-0">

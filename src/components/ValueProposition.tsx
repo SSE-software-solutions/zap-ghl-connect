@@ -39,9 +39,18 @@ const ValueProposition = () => {
                 </div>
                 
                 <div className="flex items-center gap-6 flex-1">
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-gray-900 flex-1">
-                    {t('value.stopPaying')}
-                  </h2>
+                  <div className="flex-1">
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-gray-900 mb-4">
+                      {t('value.stopPaying')}
+                    </h2>
+                    
+                    {/* QuickZap Slogan */}
+                    <div className="bg-gradient-to-r from-whatsapp/10 to-green-100 rounded-2xl p-4 border-l-4 border-whatsapp">
+                      <p className="text-lg md:text-xl font-semibold text-whatsapp">
+                        <span className="font-black">QuickZap:</span> "Conecta rápido tu WhatsApp en tan solo 5 clics"
+                      </p>
+                    </div>
+                  </div>
                   
                   {/* Large WhatsApp Logo */}
                   <div className="flex-shrink-0 hidden lg:block">

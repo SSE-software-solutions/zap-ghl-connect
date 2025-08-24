@@ -30,17 +30,26 @@ const ValueProposition = () => {
                   {/* WhatsApp badge */}
                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-gray-100">
                     <img 
-                      src="/lovable-uploads/d2e731f6-478a-41c5-9fb6-eeb251d8bef1.png" 
+                      src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
                       alt="WhatsApp" 
                       className="w-3.5 h-3.5 object-contain"
                     />
                   </div>
                 </div>
                 
-                <div className="flex-1">
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-gray-900">
+                <div className="flex-1 flex items-center gap-4">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-gray-900">
                     {t('value.stopPaying')}
                   </h2>
+                  
+                  {/* WhatsApp Logo al costado */}
+                  <div className="flex-shrink-0 hidden md:block">
+                    <img 
+                      src="/lovable-uploads/aeac0860-1a6f-4d0e-a68d-cd9400af9e04.png" 
+                      alt="WhatsApp Logo" 
+                      className="w-16 h-16 object-contain opacity-80 hover:opacity-100 transition-opacity duration-300"
+                    />
+                  </div>
                 </div>
               </div>
 

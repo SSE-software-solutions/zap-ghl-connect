@@ -3,13 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Rocket, 
   Building2, 
-  Palette, 
-  Users, 
-  BookOpen, 
-  Percent, 
-  HelpCircle, 
-  Puzzle, 
-  Settings,
+  Palette,
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
@@ -21,12 +15,6 @@ const sidebarItems = [
   { title: 'Launchpad', icon: Rocket, path: '/dashboard' },
   { title: 'Subaccounts', icon: Building2, path: '/dashboard/subaccounts' },
   { title: 'Branding', icon: Palette, path: '/dashboard/branding' },
-  { title: 'Community', icon: Users, path: '/dashboard/community' },
-  { title: 'Documentation', icon: BookOpen, path: '/dashboard/documentation' },
-  { title: 'Affiliate', icon: Percent, path: '/dashboard/affiliate' },
-  { title: 'Help Center', icon: HelpCircle, path: '/dashboard/help' },
-  { title: 'Integrations', icon: Puzzle, path: '/dashboard/integrations' },
-  { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ];
 
 export const DashboardSidebar = () => {

@@ -22,12 +22,34 @@ export const InstancePage = () => {
   const [qrError, setQrError] = useState<string>('');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isActionLoading, setIsActionLoading] = useState<Record<string, boolean>>({});
+  const [baseUrl, setBaseUrl] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('');
 
-  // Read baseUrl and apiKey from query params
-  const search = typeof window !== 'undefined' ? window.location.search : '';
-  const params = useMemo(() => new URLSearchParams(search), [search]);
-  const baseUrl = (params.get('baseUrl') || '').replace(/\/$/, '');
-  const apiKey = params.get('apiKey') || '';
+  // Read baseUrl and apiKey from query params, then hide them from URL
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const fromParamsBase = params.get('baseUrl');
+    const fromParamsKey = params.get('apiKey');
+
+    if (fromParamsBase && fromParamsKey) {
+      const sanitizedBase = fromParamsBase.replace(/\/$/, '');
+      sessionStorage.setItem('instance_baseUrl', sanitizedBase);
+      sessionStorage.setItem('instance_apiKey', fromParamsKey);
+      setBaseUrl(sanitizedBase);
+      setApiKey(fromParamsKey);
+      const url = new URL(window.location.href);
+      url.search = '';
+      window.history.replaceState({}, '', url.toString());
+    } else {
+      const storedBase = sessionStorage.getItem('instance_baseUrl') || '';
+      const storedKey = sessionStorage.getItem('instance_apiKey') || '';
+      if (storedBase && storedKey) {
+        setBaseUrl(storedBase);
+        setApiKey(storedKey);
+      }
+    }
+  }, []);
 
   const fetchSessions = async () => {
     if (!baseUrl || !apiKey) return;

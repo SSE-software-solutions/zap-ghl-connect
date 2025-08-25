@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,26 +14,52 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
       const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
       const url = `${sanitizedBase}/api/auth/login`;
+
+      const params = new URLSearchParams();
+      params.set('grant_type', 'password');
+      params.set('username', email);
+      params.set('password', password);
+      params.set('scope', '');
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ email, password }),
+        body: params.toString(),
       });
 
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const message = (data && (data.message || data.error || data.detail)) || 'Usuario o contraseña inválidos';
+        const toMessage = (payload: any): string => {
+          if (!payload) return 'Usuario o contraseña inválidos';
+          if (typeof payload === 'string') return payload;
+          const detail = payload?.detail ?? payload?.message ?? payload?.error;
+          if (Array.isArray(detail)) {
+            const msgs = detail.map((d: any) => d?.msg || d?.message).filter(Boolean);
+            if (msgs.length) return msgs.join(', ');
+          }
+          if (detail && typeof detail === 'object' && (detail.msg || detail.message)) {
+            return detail.msg || detail.message;
+          }
+          return typeof detail === 'string' ? detail : 'Usuario o contraseña inválidos';
+        };
+        const message = toMessage(data);
         toast({
           title: "Error de autenticación",
           description: message,
@@ -42,7 +68,8 @@ const Login = () => {
         return;
       }
 
-      const token = data?.token || data?.access_token || data?.accessToken || data?.jwt || data?.data?.token;
+      const token = data?.access_token || data?.token || data?.accessToken || data?.jwt || data?.data?.token;
+      const tokenType: string | undefined = data?.token_type;
       if (!token) {
         toast({
           title: "Error",
@@ -53,11 +80,14 @@ const Login = () => {
       }
 
       localStorage.setItem('auth_token', String(token));
+      if (tokenType) {
+        localStorage.setItem('auth_token_type', String(tokenType));
+      }
       toast({
         title: "Inicio de sesión exitoso",
         description: "Bienvenido al panel de cliente",
       });
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       toast({
         title: "Error de red",
@@ -93,11 +123,11 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Usuario o Correo</Label>
+              <Label htmlFor="email">Usuario</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="tu@email.com"
+                type="text"
+                placeholder="tu_usuario"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

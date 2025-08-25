@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Copy, Eye, EyeOff, ExternalLink, LogOut, Plus, Zap } from 'lucide-react';
@@ -24,16 +22,60 @@ const Dashboard = () => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isCreatingInstance, setIsCreatingInstance] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [ghlApiKey, setGhlApiKey] = useState('');
+  const [connectUrl, setConnectUrl] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is authenticated (mock check)
+    // Check auth and fetch instances
     const token = localStorage.getItem('auth_token');
     if (!token) {
       navigate('/login');
+      return;
     }
+
+    const fetchInstances = async () => {
+      try {
+        const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+        const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+        const url = `${sanitizedBase}/api/instances/`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          if (response.status === 401) {
+            toast({ title: 'Sesión expirada', description: 'Vuelve a iniciar sesión', variant: 'destructive' });
+            navigate('/login');
+            return;
+          }
+          return;
+        }
+        if (Array.isArray(data) && data.length > 0) {
+          const first = data[0];
+          const loaded: Instance = {
+            instance_name: first?.instance_name ?? '',
+            instance_url: first?.instance_url ?? '',
+            api_key: first?.api_key ?? '',
+            internal_url: first?.internal_url ?? '',
+            port: String(first?.instance_port ?? first?.port ?? ''),
+            webhook_url: first?.webhook_url ?? '',
+            is_connected: Boolean(first?.is_connected),
+          };
+          setInstance(loaded);
+        } else {
+          setInstance(null);
+        }
+      } catch {
+        // Silent on mount
+      }
+    };
+
+    fetchInstances();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -47,47 +89,132 @@ const Dashboard = () => {
 
   const createInstance = async () => {
     setIsCreatingInstance(true);
-    
-    // Mock API call
-    setTimeout(() => {
-      const mockInstance: Instance = {
-        instance_name: `quickzap-${Math.random().toString(36).substr(2, 6)}`,
-        instance_url: `https://quickzap-${Math.random().toString(36).substr(2, 6)}.app`,
-        api_key: `qz_${Math.random().toString(36).substr(2, 24)}`,
-        internal_url: `http://internal-${Math.random().toString(36).substr(2, 8)}.local`,
-        port: '3000',
-        webhook_url: `https://webhook-${Math.random().toString(36).substr(2, 8)}.quickzap.app`,
-        is_connected: false
-      };
-      
-      setInstance(mockInstance);
-      setIsCreatingInstance(false);
-      
-      toast({
-        title: "Instancia creada",
-        description: "Tu instancia de QuickZap ha sido creada exitosamente",
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: "No autenticado",
+          description: "Inicia sesión para crear una instancia",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const url = `${sanitizedBase}/api/instances/`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
-    }, 2000);
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const toMessage = (payload: any): string => {
+          if (!payload) return 'No se pudo crear la instancia';
+          if (typeof payload === 'string') return payload;
+          const detail = payload?.detail ?? payload?.message ?? payload?.error;
+          if (Array.isArray(detail)) {
+            const msgs = detail.map((d: any) => d?.msg || d?.message).filter(Boolean);
+            if (msgs.length) return msgs.join(', ');
+          }
+          if (detail && typeof detail === 'object' && (detail.msg || detail.message)) {
+            return detail.msg || detail.message;
+          }
+          return typeof detail === 'string' ? detail : 'No se pudo crear la instancia';
+        };
+        const message = toMessage(data);
+        if (response.status === 401) {
+          toast({ title: 'Sesión expirada', description: 'Vuelve a iniciar sesión', variant: 'destructive' });
+          navigate('/login');
+        } else {
+          toast({ title: 'Error', description: message, variant: 'destructive' });
+        }
+        return;
+      }
+
+      const newInstance: Instance = {
+        instance_name: data?.instance_name ?? '',
+        instance_url: data?.instance_url ?? '',
+        api_key: data?.api_key ?? '',
+        internal_url: data?.internal_url ?? '',
+        port: String(data?.instance_port ?? data?.port ?? ''),
+        webhook_url: data?.webhook_url ?? '',
+        is_connected: Boolean(data?.is_connected),
+      };
+
+      setInstance(newInstance);
+      toast({
+        title: 'Instancia creada',
+        description: 'Tu instancia de QuickZap ha sido creada exitosamente',
+      });
+    } catch (err) {
+      toast({ title: 'Error de red', description: 'No se pudo conectar con el servidor', variant: 'destructive' });
+    } finally {
+      setIsCreatingInstance(false);
+    }
   };
 
   const connectToGHL = async () => {
     setIsConnecting(true);
-    
-    // Mock connection process
-    setTimeout(() => {
-      if (instance) {
-        setInstance({ ...instance, is_connected: true });
-        setIsDialogOpen(false);
-        setGhlApiKey('');
-        setIsConnecting(false);
-        
-        toast({
-          title: "Conectado a GHL",
-          description: "Tu instancia ahora está conectada a GoHighLevel",
-        });
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({ title: 'No autenticado', description: 'Vuelve a iniciar sesión', variant: 'destructive' });
+        navigate('/login');
+        return;
       }
-    }, 1500);
+
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const url = `${sanitizedBase}/api/marketplace/connect`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        redirect: 'follow',
+      });
+
+      // Extrae la URL de autorización del JSON; como fallback usa response.url si hubo redirect
+      let destination: string | undefined;
+      try {
+        const payload = await response.clone().json();
+        destination = payload?.authorization_url || payload?.url || payload?.connect_url || payload?.redirect_url || payload?.data?.url;
+      } catch {}
+      if (!destination && response.redirected) {
+        destination = response.url;
+      }
+
+      if (destination && /^https?:\/\//i.test(destination)) {
+        setConnectUrl(destination);
+        toast({ title: 'URL obtenida', description: 'Abre el enlace para autorizar' });
+      } else {
+        toast({ title: 'Error', description: 'No se recibió la URL de autorización', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: 'No se pudo iniciar la conexión con GHL', variant: 'destructive' });
+    } finally {
+      setIsConnecting(false);
+    }
   };
+
+  useEffect(() => {
+    if (isDialogOpen) {
+      setConnectUrl('');
+      connectToGHL();
+    }
+  }, [isDialogOpen]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -149,29 +276,41 @@ const Dashboard = () => {
                   <DialogHeader>
                     <DialogTitle>Conectar a GoHighLevel</DialogTitle>
                     <DialogDescription>
-                      Ingresa tu API Key de GoHighLevel para conectar tu instancia
+                      Ingresa a este enlace para autorizar la conexión con tu cuenta de GoHighLevel.
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="ghl-key">API Key de GHL</Label>
-                      <Input
-                        id="ghl-key"
-                        placeholder="Ingresa tu API Key..."
-                        value={ghlApiKey}
-                        onChange={(e) => setGhlApiKey(e.target.value)}
-                      />
+                      <p className="text-sm text-gray-700 break-all">
+                        {connectUrl ? connectUrl : (isConnecting ? 'Obteniendo URL de autorización...' : 'No se ha generado una URL todavía.')}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => connectUrl && window.open(connectUrl, '_blank', 'noopener,noreferrer')}
+                          disabled={!connectUrl}
+                        >
+                          Abrir URL en nueva pestaña
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigator.clipboard.writeText(connectUrl)}
+                          disabled={!connectUrl}
+                        >
+                          Copiar URL
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  
+
                   <DialogFooter>
                     <Button
                       onClick={connectToGHL}
-                      disabled={isConnecting || !ghlApiKey}
+                      disabled={isConnecting}
                       className="bg-whatsapp hover:bg-whatsapp/90"
                     >
-                      {isConnecting ? 'Conectando...' : 'Conectar'}
+                      {isConnecting ? 'Conectando...' : 'Generar URL nuevamente'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

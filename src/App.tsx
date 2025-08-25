@@ -12,6 +12,7 @@ import { LaunchpadPage } from "./pages/LaunchpadPage";
 import { SubaccountsPage } from "./pages/SubaccountsPage";
 import { BrandingPage } from "./pages/BrandingPage";
 import { CommunityPage, DocumentationPage, AffiliatePage, HelpPage, IntegrationsPage, SettingsPage } from "./pages/PlaceholderPages";
+import { InstancePage } from "./pages/InstancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/instance" element={<InstancePage />} />
             <Route path="/dashboard" element={<Dashboard />}>
               <Route index element={<LaunchpadPage />} />
               <Route path="subaccounts" element={<SubaccountsPage />} />

@@ -32,7 +32,7 @@ export const SubaccountsPage = () => {
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<number, boolean>>({});
-  
+  const [isCreating, setIsCreating] = useState(false);
 
   const generateLocationId = (id: number) => {
     const hash = `fm${id}l...x${id}mfy`;
@@ -41,9 +41,12 @@ export const SubaccountsPage = () => {
 
   const createInstance = async () => {
     try {
+      setIsCreating(true);
+      setIsCreateModalOpen(false); // cerrar inmediatamente
       const token = localStorage.getItem('auth_token');
       if (!token) {
         toast({ title: 'No autenticado', description: 'Inicia sesión nuevamente', variant: 'destructive' });
+        setIsCreating(false);
         return;
       }
       const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
@@ -62,6 +65,7 @@ export const SubaccountsPage = () => {
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
+        setIsCreating(false);
         return;
       }
 
@@ -77,10 +81,10 @@ export const SubaccountsPage = () => {
       };
 
       setInstances(prev => [newInstance, ...prev]);
-      setIsCreateModalOpen(false);
       toast({ title: 'Instancia creada', description: 'Tu nueva instancia ha sido creada exitosamente' });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
+      setIsCreating(false);
     }
   };
 
@@ -213,7 +217,7 @@ export const SubaccountsPage = () => {
           >
             <Zap className="h-4 w-4 mr-2" /> Connect to GHL
           </Button>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90" disabled={isCreating || instances.length > 0}>
             Create Instance
           </Button>
         </div>
@@ -284,7 +288,20 @@ export const SubaccountsPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={() => window.open(instance.instance_url, '_blank')}>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const extractBase = (url?: string) => {
+                            if (!url) return '';
+                            const match = url.match(/^https?:\/\/[^/]+/i);
+                            return match ? match[0] : '';
+                          };
+                          const base = extractBase(instance.internal_url) || extractBase(instance.instance_url);
+                          const baseParam = encodeURIComponent(base);
+                          const apiKeyParam = encodeURIComponent(instance.api_key || '');
+                          const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}`;
+                          window.open(target, '_blank');
+                        }}
+                      >
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Open in new tab
                       </DropdownMenuItem>
@@ -426,10 +443,10 @@ export const SubaccountsPage = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)} disabled={isCreating}>
               Cancel
             </Button>
-            <Button onClick={createInstance}>
+            <Button onClick={createInstance} disabled={isCreating}>
               Create Instance
             </Button>
           </DialogFooter>

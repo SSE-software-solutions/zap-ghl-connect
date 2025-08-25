@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,19 +10,51 @@ import { toast } from '@/hooks/use-toast';
 interface Session {
   id: number;
   name: string;
-  alias: string;
-  phoneNumber: string;
-  isActive: boolean;
+  status: string;
 }
 
 export const InstancePage = () => {
   const [sessionName, setSessionName] = useState('');
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [selectedSessionQR, setSelectedSessionQR] = useState<string>('');
-  const [sessions, setSessions] = useState<Session[]>([
-    { id: 1, name: 'session_demo_1', alias: 'Demo 1', phoneNumber: '+1234567890', isActive: true },
-    { id: 2, name: 'session_demo_2', alias: 'Demo 2', phoneNumber: '+0987654321', isActive: false },
-  ]);
+  const [qrObjectUrl, setQrObjectUrl] = useState<string>('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string>('');
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isActionLoading, setIsActionLoading] = useState<Record<string, boolean>>({});
+
+  // Read baseUrl and apiKey from query params
+  const search = typeof window !== 'undefined' ? window.location.search : '';
+  const params = useMemo(() => new URLSearchParams(search), [search]);
+  const baseUrl = (params.get('baseUrl') || '').replace(/\/$/, '');
+  const apiKey = params.get('apiKey') || '';
+
+  const fetchSessions = async () => {
+    if (!baseUrl || !apiKey) return;
+    try {
+      const response = await fetch(`${baseUrl}/api/sessions`, {
+        method: 'GET',
+        headers: {
+          'X-Api-Key': apiKey,
+        },
+      });
+      const data = await response.json().catch(() => []);
+      if (!response.ok || !Array.isArray(data)) return;
+      const mapped: Session[] = data.map((d: any, idx: number) => ({
+        id: d?.id ?? idx + 1,
+        name: d?.name ?? d?.session_name ?? `session_${idx + 1}`,
+        status: String(d?.status ?? ''),
+      }));
+      setSessions(mapped);
+    } catch {
+      // ignore for now
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseUrl, apiKey]);
 
   const createSession = () => {
     if (!sessionName.trim()) {
@@ -50,49 +82,82 @@ export const InstancePage = () => {
     });
   };
 
-  const startSession = (sessionId: number) => {
-    setSessions(sessions.map(session => 
-      session.id === sessionId ? { ...session, isActive: true } : session
-    ));
-    toast({
-      title: "Sesión iniciada",
-      description: "La sesión se ha iniciado correctamente",
-    });
-  };
-
-  const stopSession = (sessionId: number) => {
-    setSessions(sessions.map(session => 
-      session.id === sessionId ? { ...session, isActive: false } : session
-    ));
-    toast({
-      title: "Sesión detenida",
-      description: "La sesión se ha detenido correctamente",
-    });
-  };
-
-  const restartSession = (sessionId: number) => {
-    setSessions(sessions.map(session => 
-      session.id === sessionId ? { ...session, isActive: true } : session
-    ));
-    toast({
-      title: "Sesión reiniciada",
-      description: "La sesión se ha reiniciado correctamente",
-    });
-  };
-
-  const toggleSession = (sessionId: number) => {
-    const session = sessions.find(s => s.id === sessionId);
-    if (session?.isActive) {
-      stopSession(sessionId);
-    } else {
-      startSession(sessionId);
+  const performAction = async (sessionName: string, action: 'start' | 'stop' | 'restart') => {
+    if (!baseUrl || !apiKey) return;
+    setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
+    try {
+      const response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(sessionName)}/${action}`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+        },
+      });
+      if (!response.ok) {
+        toast({ title: 'Error', description: `No se pudo ${action} la sesión`, variant: 'destructive' });
+      } else {
+        const actionLabel = action === 'start' ? 'iniciado' : action === 'stop' ? 'detenido' : 'reiniciado';
+        toast({ title: `Sesión ${actionLabel}`, description: `La sesión se ha ${actionLabel} correctamente` });
+      }
+    } catch {
+      toast({ title: 'Error de red', description: 'No se pudo contactar con la instancia', variant: 'destructive' });
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: false }));
+      fetchSessions();
     }
   };
 
-  const generateQR = (sessionName: string) => {
-    setSelectedSessionQR(sessionName);
-    setQrModalOpen(true);
+  const isActiveStatus = (status?: string) => {
+    if (!status) return false;
+    const s = status.toUpperCase();
+    if (s === 'STOPPED') return false;
+    if (s === 'SCAN_QR_CODE') return false;
+    if (s === 'STARTING') return false;
+    return true; // treat others as active
   };
+
+  const getStatusBadge = (status?: string) => {
+    const s = (status || '').toUpperCase();
+    if (s === 'STOPPED') return { label: 'Desconectada', variant: 'secondary' as const };
+    if (s === 'SCAN_QR_CODE') return { label: 'Escanear QR', variant: 'secondary' as const };
+    if (s === 'STARTING') return { label: 'Escanear QR', variant: 'secondary' as const };
+    return { label: 'Activa', variant: 'default' as const };
+  };
+
+  const generateQR = async (sessionName: string) => {
+    if (!baseUrl || !apiKey) return;
+    setSelectedSessionQR(sessionName);
+    setQrLoading(true);
+    setQrError('');
+    setQrObjectUrl('');
+    setQrModalOpen(true);
+    try {
+      const url = `${baseUrl}/api/${encodeURIComponent(sessionName)}/auth/qr?format=image`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Api-Key': apiKey,
+          'Accept': 'image/png',
+        },
+      });
+      if (!response.ok) {
+        setQrError('No se pudo obtener el código QR');
+        return;
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setQrObjectUrl(objectUrl);
+    } catch {
+      setQrError('Error de red al obtener el QR');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (qrObjectUrl) URL.revokeObjectURL(qrObjectUrl);
+    };
+  }, [qrObjectUrl]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -101,6 +166,9 @@ export const InstancePage = () => {
           <CardTitle className="text-center text-2xl font-bold">
             Dashboard de Instancias WhatsApp
           </CardTitle>
+          <div className="text-center text-sm text-muted-foreground mt-2">
+            {baseUrl ? `Base URL: ${baseUrl}` : 'Base URL no definida'}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Create Session */}
@@ -128,54 +196,52 @@ export const InstancePage = () => {
               </p>
             ) : (
               <div className="space-y-3">
-                {sessions.map((session) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div>
+                {sessions.map((session) => {
+                  const { label, variant } = getStatusBadge(session.status);
+                  const active = isActiveStatus(session.status);
+                  return (
+                    <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-4">
                         <div className="font-medium">Instancia: {session.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Alias: {session.alias} | Número: {session.phoneNumber}
-                        </div>
+                        <Badge variant={variant}>{label}</Badge>
                       </div>
-                      <Badge variant={session.isActive ? "default" : "secondary"}>
-                        {session.isActive ? "Activa" : "Desconectada"}
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => performAction(session.name, 'start')}
+                          disabled={active || isActionLoading[`${session.name}:start`]}
+                        >
+                          <Play className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => performAction(session.name, 'stop')}
+                          disabled={!active || isActionLoading[`${session.name}:stop`]}
+                        >
+                          <Square className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => performAction(session.name, 'restart')}
+                          disabled={isActionLoading[`${session.name}:restart`]}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generateQR(session.name)}
+                          disabled={(() => { const st = session.status?.toUpperCase(); return !(st === 'SCAN_QR_CODE' || st === 'STARTING'); })()}
+                        >
+                          <QrCode className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startSession(session.id)}
-                        disabled={session.isActive}
-                      >
-                        <Play className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => stopSession(session.id)}
-                        disabled={!session.isActive}
-                      >
-                        <Square className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => restartSession(session.id)}
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => generateQR(session.name)}
-                      >
-                        <QrCode className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -183,19 +249,25 @@ export const InstancePage = () => {
       </Card>
 
       {/* QR Modal */}
-      <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
+      <Dialog open={qrModalOpen} onOpenChange={(open) => { setQrModalOpen(open); if (!open && qrObjectUrl) { URL.revokeObjectURL(qrObjectUrl); setQrObjectUrl(''); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Escanear QR - {selectedSessionQR}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-6">
-            <div className="w-64 h-64 bg-muted rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <QrCode className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  QR Code para {selectedSessionQR}
-                </p>
-              </div>
+            <div className="w-72 h-72 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+              {qrLoading ? (
+                <p className="text-sm text-muted-foreground">Cargando QR...</p>
+              ) : qrError ? (
+                <p className="text-sm text-destructive">{qrError}</p>
+              ) : qrObjectUrl ? (
+                <img src={qrObjectUrl} alt="QR Code" className="w-full h-full object-contain" />
+              ) : (
+                <div className="text-center">
+                  <QrCode className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">QR no disponible</p>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>

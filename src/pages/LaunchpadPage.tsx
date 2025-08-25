@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, DollarSign, BookOpen, MessageCircle, LifeBuoy } from 'lucide-react';
+import { Building2, Users, BookOpen, MessageCircle, LifeBuoy } from 'lucide-react';
 
 export const LaunchpadPage = () => {
   return (
@@ -14,7 +14,7 @@ export const LaunchpadPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
@@ -24,34 +24,6 @@ export const LaunchpadPage = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Subaccounts</p>
                 <p className="text-2xl font-bold">1/1</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Users</p>
-                <p className="text-2xl font-bold">1</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                <p className="text-2xl font-bold">$0.00</p>
               </div>
             </div>
           </CardContent>

@@ -82,7 +82,7 @@ export const DashboardSidebar = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="w-full justify-start"
         >
-          <ChevronUp className="h-4 w-4" />
+          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           {!isCollapsed && <span className="ml-2">Collapse</span>}
         </Button>
       </div>

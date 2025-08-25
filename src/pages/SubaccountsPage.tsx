@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, MoreHorizontal, Star, ExternalLink, Settings, Users, Lock, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, MoreHorizontal, ExternalLink, Trash2, Copy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/hooks/use-toast';
-import { Copy, EyeOff, Zap } from 'lucide-react';
 
 interface Instance {
   id: number;
@@ -28,9 +27,12 @@ export const SubaccountsPage = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGhlModalOpen, setIsGhlModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectUrl, setConnectUrl] = useState('');
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [ghlApiKey, setGhlApiKey] = useState('');
+  const [visibleApiKeys, setVisibleApiKeys] = useState<Record<number, boolean>>({});
+  
 
   const generateLocationId = (id: number) => {
     const hash = `fm${id}l...x${id}mfy`;
@@ -39,56 +41,81 @@ export const SubaccountsPage = () => {
 
   const createInstance = async () => {
     try {
-      // Mock API call
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({ title: 'No autenticado', description: 'Inicia sesión nuevamente', variant: 'destructive' });
+        return;
+      }
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const url = `${sanitizedBase}/api/instances/`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
+        return;
+      }
+
       const newInstance: Instance = {
-        id: Date.now(),
-        instance_name: `wa_instance_${instances.length + 1}_${Math.random().toString(36).substr(2, 8)}`,
-        instance_url: `http://localhost:${45643 + instances.length}/dashboard?auto_config=true&api_key=${Math.random().toString(36).substr(2, 32)}`,
-        api_key: Math.random().toString(36).substr(2, 32),
-        internal_url: `http://host.docker.internal:${45643 + instances.length}/`,
-        instance_port: 45643 + instances.length,
-        webhook_url: `http://host.docker.internal:8000/api/webhooks/waha/wa_instance_${instances.length + 1}_${Math.random().toString(36).substr(2, 8)}`,
-        is_connected: false
+        id: Number(data?.id ?? Date.now()),
+        instance_name: data?.instance_name ?? '',
+        instance_url: data?.instance_url ?? '',
+        api_key: data?.api_key ?? '',
+        internal_url: data?.internal_url ?? '',
+        instance_port: Number(data?.instance_port ?? 0),
+        webhook_url: data?.webhook_url ?? '',
+        is_connected: Boolean(data?.is_connected ?? false),
       };
 
-      setInstances(prev => [...prev, newInstance]);
+      setInstances(prev => [newInstance, ...prev]);
       setIsCreateModalOpen(false);
-      toast({
-        title: 'Instancia creada',
-        description: 'Tu nueva instancia ha sido creada exitosamente',
-      });
+      toast({ title: 'Instancia creada', description: 'Tu nueva instancia ha sido creada exitosamente' });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo crear la instancia',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
     }
   };
 
-  const connectToGHL = async (method: 'oauth' | 'apiKey') => {
-    if (!selectedInstance) return;
-
+  const fetchConnectUrl = async () => {
     try {
-      // Mock API call
-      const updatedInstance = { ...selectedInstance, is_connected: true };
-      setInstances(prev => prev.map(inst => 
-        inst.id === selectedInstance.id ? updatedInstance : inst
-      ));
-      setSelectedInstance(updatedInstance);
-      setIsGhlModalOpen(false);
-      setGhlApiKey('');
-      
-      toast({
-        title: 'Conectado a GHL',
-        description: 'La instancia se ha conectado exitosamente a GoHighLevel',
+      setIsConnecting(true);
+      setConnectUrl('');
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({ title: 'No autenticado', description: 'Inicia sesión nuevamente', variant: 'destructive' });
+        setIsConnecting(false);
+        return;
+      }
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const url = `${sanitizedBase}/api/marketplace/connect`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo conectar a GoHighLevel',
-        variant: 'destructive',
-      });
+      const payload = await response.json().catch(() => null);
+      const destination = payload?.authorization_url || payload?.url || payload?.redirect_url || payload?.data?.url;
+      if (destination && /^https?:\/\//i.test(destination)) {
+        setConnectUrl(destination);
+      } else {
+        toast({ title: 'Error', description: 'No se recibió la URL de autorización', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo obtener la URL de autorización', variant: 'destructive' });
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -120,6 +147,41 @@ export const SubaccountsPage = () => {
     });
   };
 
+  useEffect(() => {
+    const fetchInstances = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+        const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+        const url = `${sanitizedBase}/api/instances/`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) return;
+        if (Array.isArray(data)) {
+          const mapped: Instance[] = data.map((d: any) => ({
+            id: Number(d?.id ?? Date.now()),
+            instance_name: d?.instance_name ?? '',
+            instance_url: d?.instance_url ?? '',
+            api_key: d?.api_key ?? '',
+            internal_url: d?.internal_url ?? '',
+            instance_port: Number(d?.instance_port ?? 0),
+            webhook_url: d?.webhook_url ?? '',
+            is_connected: Boolean(d?.is_connected ?? false),
+          }));
+          setInstances(mapped);
+        }
+      } catch {}
+    };
+    fetchInstances();
+  }, []);
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -141,9 +203,20 @@ export const SubaccountsPage = () => {
             </Button>
           </div>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90">
-          Create Instance
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsGhlModalOpen(true);
+              fetchConnectUrl();
+            }}
+          >
+            <Zap className="h-4 w-4 mr-2" /> Connect to GHL
+          </Button>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90">
+            Create Instance
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -157,7 +230,7 @@ export const SubaccountsPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead>NAME</TableHead>
-              <TableHead>LOCATION ID</TableHead>
+              <TableHead>API KEY</TableHead>
               <TableHead>CONNECTION STATUS</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -179,8 +252,18 @@ export const SubaccountsPage = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm">{generateLocationId(instance.id)}</span>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <span className="font-mono text-sm">
+                      {visibleApiKeys[instance.id] ? instance.api_key : '••••••••••••••••'}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => setVisibleApiKeys(prev => ({ ...prev, [instance.id]: !prev[instance.id] }))}
+                    >
+                      {visibleApiKeys[instance.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => copyToClipboard(instance.api_key)}>
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
@@ -200,34 +283,10 @@ export const SubaccountsPage = () => {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Star className="h-4 w-4 mr-2" />
-                        Add to Favorites
-                      </DropdownMenuItem>
+                    <DropdownMenuContent align="start">
                       <DropdownMenuItem onClick={() => window.open(instance.instance_url, '_blank')}>
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Open in new tab
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Manage limits
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Edit permissions
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Users className="h-4 w-4 mr-2" />
-                        Invite member
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Users className="h-4 w-4 mr-2" />
-                        Manage access
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Lock className="h-4 w-4 mr-2" />
-                        Lock account
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
@@ -378,53 +437,25 @@ export const SubaccountsPage = () => {
       </Dialog>
 
       {/* GHL Connection Modal */}
-      <Dialog open={isGhlModalOpen} onOpenChange={setIsGhlModalOpen}>
+      <Dialog open={isGhlModalOpen} onOpenChange={(open) => { setIsGhlModalOpen(open); if (open) fetchConnectUrl(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Connect to GoHighLevel</DialogTitle>
             <DialogDescription>
-              Choose how you want to connect this instance to GoHighLevel.
+              Autoriza QuickZap en GoHighLevel. Abre la autorización en una nueva pestaña.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            <Button 
-              onClick={() => connectToGHL('oauth')}
-              className="w-full"
-              variant="outline"
-            >
-              Continue with GHL OAuth
-            </Button>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="ghl-api-key">GHL API Key</Label>
-              <Input
-                id="ghl-api-key"
-                value={ghlApiKey}
-                onChange={(e) => setGhlApiKey(e.target.value)}
-                placeholder="Enter your GoHighLevel API key"
-              />
-            </div>
+
+          <div className="text-sm text-muted-foreground">
+            {isConnecting ? 'Obteniendo URL de autorización...' : (connectUrl ? 'URL lista para abrir.' : 'No se pudo obtener la URL. Intenta nuevamente.')}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsGhlModalOpen(false)}>
-              Cancel
+              Cerrar
             </Button>
-            <Button 
-              onClick={() => connectToGHL('apiKey')}
-              disabled={!ghlApiKey}
-            >
-              Connect with API Key
+            <Button onClick={() => connectUrl && window.open(connectUrl, '_blank', 'noopener,noreferrer')} disabled={!connectUrl || isConnecting}>
+              Abrir en nueva pestaña
             </Button>
           </DialogFooter>
         </DialogContent>

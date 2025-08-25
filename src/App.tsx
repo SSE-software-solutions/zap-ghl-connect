@@ -8,6 +8,10 @@ import Index from "./pages/Index";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import { LaunchpadPage } from "./pages/LaunchpadPage";
+import { SubaccountsPage } from "./pages/SubaccountsPage";
+import { BrandingPage } from "./pages/BrandingPage";
+import { CommunityPage, DocumentationPage, AffiliatePage, HelpPage, IntegrationsPage, SettingsPage } from "./pages/PlaceholderPages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,8 +27,17 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/dashboard" element={<Dashboard />}>
+              <Route index element={<LaunchpadPage />} />
+              <Route path="subaccounts" element={<SubaccountsPage />} />
+              <Route path="branding" element={<BrandingPage />} />
+              <Route path="community" element={<CommunityPage />} />
+              <Route path="documentation" element={<DocumentationPage />} />
+              <Route path="affiliate" element={<AffiliatePage />} />
+              <Route path="help" element={<HelpPage />} />
+              <Route path="integrations" element={<IntegrationsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

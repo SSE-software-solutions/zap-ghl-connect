@@ -293,12 +293,13 @@ export const SubaccountsPage = () => {
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem
                         onClick={() => {
-                          const extractBase = (url?: string) => {
+                          const extractBaseFromInstanceUrl = (url?: string) => {
                             if (!url) return '';
+                            // Esperamos algo como http(s)://host:port/path?...
                             const match = url.match(/^https?:\/\/[^/]+/i);
                             return match ? match[0] : '';
                           };
-                          const base = extractBase(instance.internal_url) || extractBase(instance.instance_url);
+                          const base = extractBaseFromInstanceUrl(instance.instance_url);
                           const baseParam = encodeURIComponent(base);
                           const apiKeyParam = encodeURIComponent(instance.api_key || '');
                           const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}`;

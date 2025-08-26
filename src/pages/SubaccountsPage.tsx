@@ -34,6 +34,12 @@ export const SubaccountsPage = () => {
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<number, boolean>>({});
   const [isCreating, setIsCreating] = useState(false);
 
+  const getApiBase = () => {
+    const raw = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
+    const withProtocol = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+    return withProtocol(String(raw)).replace(/\/$/, '');
+  };
+
   const generateLocationId = (id: number) => {
     const hash = `fm${id}l...x${id}mfy`;
     return hash;
@@ -49,8 +55,7 @@ export const SubaccountsPage = () => {
         setIsCreating(false);
         return;
       }
-      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
-      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const sanitizedBase = getApiBase();
       const url = `${sanitizedBase}/api/instances/`;
 
       const response = await fetch(url, {
@@ -98,8 +103,7 @@ export const SubaccountsPage = () => {
         setIsConnecting(false);
         return;
       }
-      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
-      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const sanitizedBase = getApiBase();
       const url = `${sanitizedBase}/api/marketplace/connect`;
       const response = await fetch(url, {
         method: 'GET',
@@ -156,8 +160,7 @@ export const SubaccountsPage = () => {
       try {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
-        const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
-        const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+        const sanitizedBase = getApiBase();
         const url = `${sanitizedBase}/api/instances/`;
         const response = await fetch(url, {
           method: 'GET',

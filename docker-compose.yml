@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    image: zap-ghl-connect:dev
+    container_name: zap-ghl-connect-web
+    ports:
+      - "8080:8080"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: ["npm","run","dev","--","--host","0.0.0.0","--port","8080"]
+
+

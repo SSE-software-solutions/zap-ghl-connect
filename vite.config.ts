@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Permitir dominios externos (e.g., getquickzap.com)
+    allowedHosts: ["getquickzap.com"],
   },
   plugins: [
     react(),

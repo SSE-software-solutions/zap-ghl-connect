@@ -26,7 +26,8 @@ const Login = () => {
     setIsLoading(true);
     try {
       const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
-      const sanitizedBase = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+      const withProtocol = (u: string) => /^https?:\/\//i.test(u) ? u : `https://${u}`;
+      const sanitizedBase = typeof baseUrl === 'string' ? withProtocol(baseUrl).replace(/\/$/, '') : '';
       const url = `${sanitizedBase}/api/auth/login`;
 
       const params = new URLSearchParams();

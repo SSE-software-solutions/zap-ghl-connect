@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { decryptPayload } from '@/lib/secure-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,30 +26,46 @@ export const InstancePage = () => {
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
 
-  // Read baseUrl and apiKey from query params, then hide them from URL
+  // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
     const fromParamsBase = params.get('baseUrl');
     const fromParamsKey = params.get('apiKey');
 
-    if (fromParamsBase && fromParamsKey) {
-      const sanitizedBase = fromParamsBase.replace(/\/$/, '');
+    const applyAndHide = (b?: string, k?: string) => {
+      if (!b || !k) return false;
+      const sanitizedBase = b.replace(/\/$/, '');
       sessionStorage.setItem('instance_baseUrl', sanitizedBase);
-      sessionStorage.setItem('instance_apiKey', fromParamsKey);
+      sessionStorage.setItem('instance_apiKey', k);
       setBaseUrl(sanitizedBase);
-      setApiKey(fromParamsKey);
+      setApiKey(k);
       const url = new URL(window.location.href);
       url.search = '';
       window.history.replaceState({}, '', url.toString());
-    } else {
+      return true;
+    };
+
+    (async () => {
+      if (token) {
+        const payload = await decryptPayload(token).catch(() => null);
+        const expOk = payload?.exp ? Date.now() < Number(payload.exp) : true;
+        if (payload?.baseUrl && payload?.apiKey && expOk) {
+          if (applyAndHide(String(payload.baseUrl), String(payload.apiKey))) return;
+        }
+      }
+
+      if (fromParamsBase && fromParamsKey) {
+        if (applyAndHide(fromParamsBase, fromParamsKey)) return;
+      }
       const storedBase = sessionStorage.getItem('instance_baseUrl') || '';
       const storedKey = sessionStorage.getItem('instance_apiKey') || '';
       if (storedBase && storedKey) {
         setBaseUrl(storedBase);
         setApiKey(storedKey);
       }
-    }
+    })();
   }, []);
 
   const fetchSessions = async () => {
@@ -58,6 +75,7 @@ export const InstancePage = () => {
         method: 'GET',
         headers: {
           'X-Api-Key': apiKey,
+          'Accept': 'application/json',
         },
       });
       const data = await response.json().catch(() => []);

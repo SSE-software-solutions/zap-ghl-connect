@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/hooks/use-toast';
+import { encryptPayload } from '@/lib/secure-link';
 
 interface Instance {
   id: number;
@@ -292,18 +293,25 @@ export const SubaccountsPage = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem
-                        onClick={() => {
+                        onClick={async () => {
                           const extractBaseFromInstanceUrl = (url?: string) => {
                             if (!url) return '';
-                            // Esperamos algo como http(s)://host:port/path?...
                             const match = url.match(/^https?:\/\/[^/]+/i);
                             return match ? match[0] : '';
                           };
                           const base = extractBaseFromInstanceUrl(instance.instance_url);
-                          const baseParam = encodeURIComponent(base);
-                          const apiKeyParam = encodeURIComponent(instance.api_key || '');
-                          const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}`;
-                          window.open(target, '_blank');
+                          try {
+                            const exp = Date.now() + 60 * 60 * 1000; // 1h
+                            const token = await encryptPayload({ baseUrl: base, apiKey: instance.api_key, exp });
+                            const target = `/instance?token=${encodeURIComponent(token)}`;
+                            window.open(target, '_blank');
+                          } catch {
+                            // fallback a parámetros planos si falla cifrado
+                            const baseParam = encodeURIComponent(base);
+                            const apiKeyParam = encodeURIComponent(instance.api_key || '');
+                            const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}`;
+                            window.open(target, '_blank');
+                          }
                         }}
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />

@@ -302,7 +302,8 @@ export const SubaccountsPage = () => {
                           const base = extractBaseFromInstanceUrl(instance.instance_url);
                           try {
                             const exp = Date.now() + 60 * 60 * 1000; // 1h
-                            const token = await encryptPayload({ baseUrl: base, apiKey: instance.api_key, instanceId: instance.id, instanceName: instance.instance_name, exp });
+                            const appToken = localStorage.getItem('auth_token') || '';
+                            const token = await encryptPayload({ baseUrl: base, apiKey: instance.api_key, instanceId: instance.id, instanceName: instance.instance_name, appToken, exp });
                             const target = `/instance?token=${encodeURIComponent(token)}`;
                             window.open(target, '_blank');
                           } catch {

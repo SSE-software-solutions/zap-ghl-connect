@@ -31,6 +31,7 @@ export const InstancePage = () => {
   const [showShare, setShowShare] = useState(false);
   const [instanceId, setInstanceId] = useState<string>('');
   const [instanceName, setInstanceName] = useState<string>('');
+  const [appToken, setAppToken] = useState<string>('');
 
   // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
@@ -64,6 +65,7 @@ export const InstancePage = () => {
         const payload = await decryptPayload(token).catch(() => null);
         const expOk = payload?.exp ? Date.now() < Number(payload.exp) : true;
         if (payload?.baseUrl && payload?.apiKey && expOk) {
+          if (payload?.appToken) setAppToken(String(payload.appToken));
           if (applyAndHide(String(payload.baseUrl), String(payload.apiKey), String(payload.instanceId || ''), String(payload.instanceName || ''))) return;
         }
       }
@@ -87,9 +89,11 @@ export const InstancePage = () => {
   const fetchSessions = async () => {
     if (!baseUrl || !apiKey) return;
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = appToken || localStorage.getItem('auth_token');
+      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
+      const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
-      const url = `/api/wa-direct/server/status${param ? `?${param}` : ''}`;
+      const url = `${sanitized}/api/wa-direct/server/status${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -161,9 +165,11 @@ export const InstancePage = () => {
     if (!baseUrl || !apiKey) return;
     setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = appToken || localStorage.getItem('auth_token');
+      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
+      const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
-      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${param ? `?${param}` : ''}`;
+      const url = `${sanitized}/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -210,9 +216,11 @@ export const InstancePage = () => {
     setQrObjectUrl('');
     setQrModalOpen(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = appToken || localStorage.getItem('auth_token');
+      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
+      const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
-      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${param ? `?${param}` : ''}`;
+      const url = `${sanitized}/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {

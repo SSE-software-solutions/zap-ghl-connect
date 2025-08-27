@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { decryptPayload } from '@/lib/secure-link';
 import { encryptPayload } from '@/lib/secure-link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button as UIButton } from '@/components/ui/button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -226,35 +225,38 @@ export const InstancePage = () => {
           <CardTitle className="text-center text-2xl font-bold">
             Dashboard de Instancias WhatsApp
           </CardTitle>
-          <div className="text-center text-sm text-muted-foreground mt-2">
-            {baseUrl ? `Base URL: ${baseUrl}` : 'Base URL no definida'}
+          <div className="text-center text-sm text-muted-foreground mt-2 flex items-center justify-center gap-2">
+            <span>Base URL:</span>
+            <span className="font-mono">{baseUrl ? '••••••••••••••••' : 'No definida'}</span>
+            {baseUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  const el = e.currentTarget.previousElementSibling as HTMLElement | null;
+                  if (!el) return;
+                  el.textContent = el.textContent === '••••••••••••••••' ? baseUrl : '••••••••••••••••';
+                }}
+              >
+                Mostrar
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Mixed content warning when page is HTTPS and instance is HTTP */}
-          {typeof window !== 'undefined' && window.location.protocol === 'https:' && baseUrl.startsWith('http://') && (
-            <Alert>
-              <AlertTitle>Advertencia de contenido mixto</AlertTitle>
-              <AlertDescription>
-                Estás en HTTPS pero la instancia usa HTTP ({baseUrl}). El navegador bloqueará las solicitudes.
-                Considera exponer la instancia por HTTPS o usar un proxy. También puedes abrir {baseUrl} directamente.
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Shareable encrypted link */}
           {shareUrl && (
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">Enlace para compartir (cifrado):</div>
               <div className="flex gap-2 items-center">
                 <Input readOnly value={shareUrl} className="flex-1" />
-                <UIButton
+                <Button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(shareUrl)}
                 >
                   Copiar
-                </UIButton>
-                <UIButton
+                </Button>
+                <Button
                   type="button"
                   variant="outline"
                   onClick={async () => {
@@ -268,7 +270,7 @@ export const InstancePage = () => {
                   }}
                 >
                   Regenerar
-                </UIButton>
+                </Button>
               </div>
             </div>
           )}

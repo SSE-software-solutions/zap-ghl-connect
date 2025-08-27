@@ -302,14 +302,15 @@ export const SubaccountsPage = () => {
                           const base = extractBaseFromInstanceUrl(instance.instance_url);
                           try {
                             const exp = Date.now() + 60 * 60 * 1000; // 1h
-                            const token = await encryptPayload({ baseUrl: base, apiKey: instance.api_key, exp });
+                            const token = await encryptPayload({ baseUrl: base, apiKey: instance.api_key, instanceId: instance.id, exp });
                             const target = `/instance?token=${encodeURIComponent(token)}`;
                             window.open(target, '_blank');
                           } catch {
                             // fallback a parámetros planos si falla cifrado
                             const baseParam = encodeURIComponent(base);
                             const apiKeyParam = encodeURIComponent(instance.api_key || '');
-                            const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}`;
+                            const idParam = encodeURIComponent(String(instance.id));
+                            const target = `/instance?baseUrl=${baseParam}&apiKey=${apiKeyParam}&instanceId=${idParam}`;
                             window.open(target, '_blank');
                           }
                         }}

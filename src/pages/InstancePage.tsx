@@ -28,6 +28,8 @@ export const InstancePage = () => {
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
   const [shareUrl, setShareUrl] = useState<string>('');
+  const [showShare, setShowShare] = useState(false);
+  const [instanceId, setInstanceId] = useState<string>('');
 
   // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
@@ -36,14 +38,17 @@ export const InstancePage = () => {
     const token = params.get('token');
     const fromParamsBase = params.get('baseUrl');
     const fromParamsKey = params.get('apiKey');
+    const fromParamsId = params.get('instanceId') || '';
 
-    const applyAndHide = (b?: string, k?: string) => {
+    const applyAndHide = (b?: string, k?: string, id?: string) => {
       if (!b || !k) return false;
       const sanitizedBase = b.replace(/\/$/, '');
       sessionStorage.setItem('instance_baseUrl', sanitizedBase);
       sessionStorage.setItem('instance_apiKey', k);
+      if (id) sessionStorage.setItem('instance_id', id);
       setBaseUrl(sanitizedBase);
       setApiKey(k);
+      if (id) setInstanceId(id);
       const url = new URL(window.location.href);
       url.search = '';
       window.history.replaceState({}, '', url.toString());
@@ -55,18 +60,20 @@ export const InstancePage = () => {
         const payload = await decryptPayload(token).catch(() => null);
         const expOk = payload?.exp ? Date.now() < Number(payload.exp) : true;
         if (payload?.baseUrl && payload?.apiKey && expOk) {
-          if (applyAndHide(String(payload.baseUrl), String(payload.apiKey))) return;
+          if (applyAndHide(String(payload.baseUrl), String(payload.apiKey), String(payload.instanceId || ''))) return;
         }
       }
 
       if (fromParamsBase && fromParamsKey) {
-        if (applyAndHide(fromParamsBase, fromParamsKey)) return;
+        if (applyAndHide(fromParamsBase, fromParamsKey, fromParamsId)) return;
       }
       const storedBase = sessionStorage.getItem('instance_baseUrl') || '';
       const storedKey = sessionStorage.getItem('instance_apiKey') || '';
+      const storedId = sessionStorage.getItem('instance_id') || '';
       if (storedBase && storedKey) {
         setBaseUrl(storedBase);
         setApiKey(storedKey);
+        setInstanceId(storedId);
       }
     })();
   }, []);
@@ -74,10 +81,12 @@ export const InstancePage = () => {
   const fetchSessions = async () => {
     if (!baseUrl || !apiKey) return;
     try {
-      const response = await fetch(`${baseUrl}/api/sessions`, {
+      const token = localStorage.getItem('auth_token');
+      const url = `/api/wa-direct/server/status${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'X-Api-Key': apiKey,
+          'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'application/json',
         },
       });
@@ -145,10 +154,13 @@ export const InstancePage = () => {
     if (!baseUrl || !apiKey) return;
     setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
     try {
-      const response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(sessionName)}/${action}`, {
+      const token = localStorage.getItem('auth_token');
+      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'X-Api-Key': apiKey,
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Accept': 'application/json',
         },
       });
       if (!response.ok) {
@@ -190,11 +202,12 @@ export const InstancePage = () => {
     setQrObjectUrl('');
     setQrModalOpen(true);
     try {
-      const url = `${baseUrl}/api/${encodeURIComponent(sessionName)}/auth/qr?format=image`;
+      const token = localStorage.getItem('auth_token');
+      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'X-Api-Key': apiKey,
+          'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'image/png',
         },
       });
@@ -247,9 +260,18 @@ export const InstancePage = () => {
           {/* Shareable encrypted link */}
           {shareUrl && (
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Enlace para compartir (cifrado):</div>
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <span>Enlace para compartir (cifrado):</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowShare(!showShare)}
+                >
+                  {showShare ? 'Ocultar' : 'Mostrar'}
+                </Button>
+              </div>
               <div className="flex gap-2 items-center">
-                <Input readOnly value={shareUrl} className="flex-1" />
+                <Input readOnly type={showShare ? 'text' : 'password'} value={shareUrl} className="flex-1" />
                 <Button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(shareUrl)}

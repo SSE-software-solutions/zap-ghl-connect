@@ -30,6 +30,7 @@ export const InstancePage = () => {
   const [shareUrl, setShareUrl] = useState<string>('');
   const [showShare, setShowShare] = useState(false);
   const [instanceId, setInstanceId] = useState<string>('');
+  const [instanceName, setInstanceName] = useState<string>('');
 
   // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
@@ -39,16 +40,19 @@ export const InstancePage = () => {
     const fromParamsBase = params.get('baseUrl');
     const fromParamsKey = params.get('apiKey');
     const fromParamsId = params.get('instanceId') || '';
+    const fromParamsName = params.get('instanceName') || '';
 
-    const applyAndHide = (b?: string, k?: string, id?: string) => {
+    const applyAndHide = (b?: string, k?: string, id?: string, name?: string) => {
       if (!b || !k) return false;
       const sanitizedBase = b.replace(/\/$/, '');
       sessionStorage.setItem('instance_baseUrl', sanitizedBase);
       sessionStorage.setItem('instance_apiKey', k);
       if (id) sessionStorage.setItem('instance_id', id);
+      if (name) sessionStorage.setItem('instance_name', name);
       setBaseUrl(sanitizedBase);
       setApiKey(k);
       if (id) setInstanceId(id);
+      if (name) setInstanceName(name);
       const url = new URL(window.location.href);
       url.search = '';
       window.history.replaceState({}, '', url.toString());
@@ -60,20 +64,22 @@ export const InstancePage = () => {
         const payload = await decryptPayload(token).catch(() => null);
         const expOk = payload?.exp ? Date.now() < Number(payload.exp) : true;
         if (payload?.baseUrl && payload?.apiKey && expOk) {
-          if (applyAndHide(String(payload.baseUrl), String(payload.apiKey), String(payload.instanceId || ''))) return;
+          if (applyAndHide(String(payload.baseUrl), String(payload.apiKey), String(payload.instanceId || ''), String(payload.instanceName || ''))) return;
         }
       }
 
       if (fromParamsBase && fromParamsKey) {
-        if (applyAndHide(fromParamsBase, fromParamsKey, fromParamsId)) return;
+        if (applyAndHide(fromParamsBase, fromParamsKey, fromParamsId, fromParamsName)) return;
       }
       const storedBase = sessionStorage.getItem('instance_baseUrl') || '';
       const storedKey = sessionStorage.getItem('instance_apiKey') || '';
       const storedId = sessionStorage.getItem('instance_id') || '';
+      const storedName = sessionStorage.getItem('instance_name') || '';
       if (storedBase && storedKey) {
         setBaseUrl(storedBase);
         setApiKey(storedKey);
         setInstanceId(storedId);
+        setInstanceName(storedName);
       }
     })();
   }, []);
@@ -82,7 +88,8 @@ export const InstancePage = () => {
     if (!baseUrl || !apiKey) return;
     try {
       const token = localStorage.getItem('auth_token');
-      const url = `/api/wa-direct/server/status${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
+      const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
+      const url = `/api/wa-direct/server/status${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -155,7 +162,8 @@ export const InstancePage = () => {
     setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
     try {
       const token = localStorage.getItem('auth_token');
-      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
+      const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
+      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -203,7 +211,8 @@ export const InstancePage = () => {
     setQrModalOpen(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${instanceId ? `?instanceId=${encodeURIComponent(instanceId)}` : ''}`;
+      const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
+      const url = `/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {

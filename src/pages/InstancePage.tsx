@@ -93,7 +93,7 @@ export const InstancePage = () => {
       const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
       const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
-      const url = `${sanitized}/api/wa-direct/server/status${param ? `?${param}` : ''}`;
+      const url = `${sanitized}/api/wa-direct/sessions${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {

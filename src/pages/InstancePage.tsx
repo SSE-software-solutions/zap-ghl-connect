@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { decryptPayload } from '@/lib/secure-link';
+import { encryptPayload } from '@/lib/secure-link';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button as UIButton } from '@/components/ui/button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +28,7 @@ export const InstancePage = () => {
   const [isActionLoading, setIsActionLoading] = useState<Record<string, boolean>>({});
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
+  const [shareUrl, setShareUrl] = useState<string>('');
 
   // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
@@ -94,6 +98,22 @@ export const InstancePage = () => {
   useEffect(() => {
     fetchSessions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseUrl, apiKey]);
+
+  // Generate shareable encrypted link
+  useEffect(() => {
+    (async () => {
+      if (!baseUrl || !apiKey) return;
+      try {
+        const ttlMin = Number((import.meta as any).env?.VITE_LINK_TTL_MINUTES ?? 60);
+        const exp = Date.now() + Math.max(1, ttlMin) * 60 * 1000;
+        const token = await encryptPayload({ baseUrl, apiKey, exp });
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        setShareUrl(`${origin}/instance?token=${encodeURIComponent(token)}`);
+      } catch {
+        setShareUrl('');
+      }
+    })();
   }, [baseUrl, apiKey]);
 
   const createSession = () => {
@@ -211,6 +231,47 @@ export const InstancePage = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Mixed content warning when page is HTTPS and instance is HTTP */}
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && baseUrl.startsWith('http://') && (
+            <Alert>
+              <AlertTitle>Advertencia de contenido mixto</AlertTitle>
+              <AlertDescription>
+                Estás en HTTPS pero la instancia usa HTTP ({baseUrl}). El navegador bloqueará las solicitudes.
+                Considera exponer la instancia por HTTPS o usar un proxy. También puedes abrir {baseUrl} directamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Shareable encrypted link */}
+          {shareUrl && (
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Enlace para compartir (cifrado):</div>
+              <div className="flex gap-2 items-center">
+                <Input readOnly value={shareUrl} className="flex-1" />
+                <UIButton
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(shareUrl)}
+                >
+                  Copiar
+                </UIButton>
+                <UIButton
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const ttlMin = Number((import.meta as any).env?.VITE_LINK_TTL_MINUTES ?? 60);
+                      const exp = Date.now() + Math.max(1, ttlMin) * 60 * 1000;
+                      const token = await encryptPayload({ baseUrl, apiKey, exp });
+                      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                      setShareUrl(`${origin}/instance?token=${encodeURIComponent(token)}`);
+                    } catch {}
+                  }}
+                >
+                  Regenerar
+                </UIButton>
+              </div>
+            </div>
+          )}
           {/* Create Session */}
           <div className="space-y-4">
             <div className="flex gap-2">

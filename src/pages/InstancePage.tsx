@@ -65,7 +65,11 @@ export const InstancePage = () => {
         const payload = await decryptPayload(token).catch(() => null);
         const expOk = payload?.exp ? Date.now() < Number(payload.exp) : true;
         if (payload?.baseUrl && payload?.apiKey && expOk) {
-          if (payload?.appToken) setAppToken(String(payload.appToken));
+          if (payload?.appToken) {
+            const at = String(payload.appToken);
+            setAppToken(at);
+            sessionStorage.setItem('instance_app_token', at);
+          }
           if (applyAndHide(String(payload.baseUrl), String(payload.apiKey), String(payload.instanceId || ''), String(payload.instanceName || ''))) return;
         }
       }
@@ -77,11 +81,13 @@ export const InstancePage = () => {
       const storedKey = sessionStorage.getItem('instance_apiKey') || '';
       const storedId = sessionStorage.getItem('instance_id') || '';
       const storedName = sessionStorage.getItem('instance_name') || '';
+      const storedAppToken = sessionStorage.getItem('instance_app_token') || '';
       if (storedBase && storedKey) {
         setBaseUrl(storedBase);
         setApiKey(storedKey);
         setInstanceId(storedId);
         setInstanceName(storedName);
+        if (storedAppToken) setAppToken(storedAppToken);
       }
     })();
   }, []);
@@ -89,7 +95,7 @@ export const InstancePage = () => {
   const fetchSessions = async () => {
     if (!baseUrl || !apiKey) return;
     try {
-      const token = appToken || localStorage.getItem('auth_token');
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
       const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
       const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
@@ -126,14 +132,14 @@ export const InstancePage = () => {
       try {
         const ttlMin = Number((import.meta as any).env?.VITE_LINK_TTL_MINUTES ?? 60);
         const exp = Date.now() + Math.max(1, ttlMin) * 60 * 1000;
-        const token = await encryptPayload({ baseUrl, apiKey, exp });
+        const token = await encryptPayload({ baseUrl, apiKey, instanceId, instanceName, appToken: appToken || sessionStorage.getItem('instance_app_token') || '', exp });
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         setShareUrl(`${origin}/instance?token=${encodeURIComponent(token)}`);
       } catch {
         setShareUrl('');
       }
     })();
-  }, [baseUrl, apiKey]);
+  }, [baseUrl, apiKey, instanceId, instanceName, appToken]);
 
   const createSession = () => {
     if (!sessionName.trim()) {
@@ -165,7 +171,7 @@ export const InstancePage = () => {
     if (!baseUrl || !apiKey) return;
     setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
     try {
-      const token = appToken || localStorage.getItem('auth_token');
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
       const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
       const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
@@ -216,7 +222,7 @@ export const InstancePage = () => {
     setQrObjectUrl('');
     setQrModalOpen(true);
     try {
-      const token = appToken || localStorage.getItem('auth_token');
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
       const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
       const sanitized = String(backendBase).replace(/\/$/, '');
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');

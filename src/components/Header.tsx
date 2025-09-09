@@ -67,10 +67,10 @@ const Header = () => {
             <Button
               variant="whatsapp"
               size="lg"
-              onClick={() => navigate('/register')}
+              onClick={() => scrollToSection('pricing')}
               className="shadow-whatsapp hover:shadow-whatsapp-hover"
             >
-              {t('header.cta')}
+              Comenzar Ahora
             </Button>
           </div>
         </div>

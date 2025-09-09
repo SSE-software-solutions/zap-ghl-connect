@@ -30,6 +30,7 @@ export const SubaccountsPage = () => {
   const [isGhlModalOpen, setIsGhlModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectUrl, setConnectUrl] = useState('');
+  const [selectedConnectInstanceName, setSelectedConnectInstanceName] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<number, boolean>>({});
@@ -94,7 +95,7 @@ export const SubaccountsPage = () => {
     }
   };
 
-  const fetchConnectUrl = async () => {
+  const fetchConnectUrl = async (instanceName?: string) => {
     try {
       setIsConnecting(true);
       setConnectUrl('');
@@ -105,7 +106,7 @@ export const SubaccountsPage = () => {
         return;
       }
       const sanitizedBase = getApiBase();
-      const url = `${sanitizedBase}/api/marketplace/connect`;
+      const url = `${sanitizedBase}/api/marketplace/connect${instanceName ? `?instance_name=${encodeURIComponent(instanceName)}` : ''}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -212,16 +213,7 @@ export const SubaccountsPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsGhlModalOpen(true);
-              fetchConnectUrl();
-            }}
-          >
-            <Zap className="h-4 w-4 mr-2" /> Connect to GHL
-          </Button>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90" disabled={isCreating || instances.length > 0}>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90" disabled={isCreating}>
             Create Instance
           </Button>
         </div>
@@ -292,6 +284,16 @@ export const SubaccountsPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedConnectInstanceName(instance.instance_name);
+                          setIsGhlModalOpen(true);
+                          fetchConnectUrl(instance.instance_name);
+                        }}
+                      >
+                        <Zap className="h-4 w-4 mr-2" />
+                        Connect to GHL
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={async () => {
                           const extractBaseFromInstanceUrl = (url?: string) => {
@@ -469,7 +471,7 @@ export const SubaccountsPage = () => {
       </Dialog>
 
       {/* GHL Connection Modal */}
-      <Dialog open={isGhlModalOpen} onOpenChange={(open) => { setIsGhlModalOpen(open); if (open) fetchConnectUrl(); }}>
+      <Dialog open={isGhlModalOpen} onOpenChange={(open) => { setIsGhlModalOpen(open); if (open) fetchConnectUrl(selectedConnectInstanceName); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Connect to GoHighLevel</DialogTitle>

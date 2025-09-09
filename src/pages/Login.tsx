@@ -71,6 +71,7 @@ const Login = () => {
 
       const token = data?.access_token || data?.token || data?.accessToken || data?.jwt || data?.data?.token;
       const tokenType: string | undefined = data?.token_type;
+      const usernameResp: string | undefined = data?.username || data?.user || data?.email || '';
       if (!token) {
         toast({
           title: "Error",
@@ -83,6 +84,9 @@ const Login = () => {
       localStorage.setItem('auth_token', String(token));
       if (tokenType) {
         localStorage.setItem('auth_token_type', String(tokenType));
+      }
+      if (usernameResp) {
+        localStorage.setItem('auth_username', String(usernameResp));
       }
       toast({
         title: "Inicio de sesión exitoso",

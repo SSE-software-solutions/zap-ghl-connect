@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useEffect } from 'react';
 import { Users, BookOpen, Percent, HelpCircle, Puzzle, Settings } from 'lucide-react';
 
 export const CommunityPage = () => (
@@ -103,3 +104,10 @@ export const SettingsPage = () => (
     </Card>
   </div>
 );
+
+export const BrandingPage = () => {
+  useEffect(() => {
+    window.location.href = 'https://whop.com/joined/quickzap/tutoriales-jj8kntN8fIjX9e/app';
+  }, []);
+  return null;
+};

@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Rocket, 
   Building2, 
-  Palette,
+  BookOpen,
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const sidebarItems = [
   { title: 'Launchpad', icon: Rocket, path: '/dashboard' },
   { title: 'Subaccounts', icon: Building2, path: '/dashboard/subaccounts' },
-  { title: 'Branding', icon: Palette, path: '/dashboard/branding' },
+  { title: 'Tutoriales', icon: BookOpen, externalUrl: 'https://whop.com/joined/quickzap/tutoriales-jj8kntN8fIjX9e/app' },
 ];
 
 export const DashboardSidebar = () => {
@@ -52,13 +52,31 @@ export const DashboardSidebar = () => {
       <nav className="flex-1 p-2">
         <div className="space-y-1">
           {sidebarItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path === '/dashboard' && location.pathname === '/dashboard');
-            
+            const isActive = item.path && (location.pathname === item.path || 
+              (item.path === '/dashboard' && location.pathname === '/dashboard'));
+
+            if ((item as any).externalUrl) {
+              return (
+                <a
+                  key={item.title}
+                  href={(item as any).externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  {!isCollapsed && <span>{item.title}</span>}
+                </a>
+              );
+            }
+
             return (
               <NavLink
                 key={item.path}
-                to={item.path}
+                to={item.path as string}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   isActive 

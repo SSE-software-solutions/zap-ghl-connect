@@ -32,6 +32,13 @@ export const InstancePage = () => {
   const [instanceId, setInstanceId] = useState<string>('');
   const [instanceName, setInstanceName] = useState<string>('');
   const [appToken, setAppToken] = useState<string>('');
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  const getBackendBase = () => {
+    const raw = (import.meta as any).env?.VITE_API_BASE_URL || 'https://saasback.getquickzap.com';
+    const withProtocol = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+    return withProtocol(String(raw)).replace(/\/$/, '');
+  };
 
   // Read baseUrl and apiKey from query params (or encrypted token), then hide them from URL
   useEffect(() => {
@@ -96,8 +103,7 @@ export const InstancePage = () => {
     if (!baseUrl || !apiKey) return;
     try {
       const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
-      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
-      const sanitized = String(backendBase).replace(/\/$/, '');
+      const sanitized = getBackendBase();
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
       const url = `${sanitized}/api/wa-direct/sessions${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
@@ -141,30 +147,44 @@ export const InstancePage = () => {
     })();
   }, [baseUrl, apiKey, instanceId, instanceName, appToken]);
 
-  const createSession = () => {
-    if (!sessionName.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un nombre para la sesión",
-        variant: "destructive"
-      });
+  const createSession = async () => {
+    const trimmedName = sessionName.trim();
+    if (!trimmedName) {
+      toast({ title: 'Error', description: 'Por favor ingresa un nombre para la sesión', variant: 'destructive' });
       return;
     }
+    setIsCreating(true);
+    try {
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
+      const sanitized = getBackendBase();
+      const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
+      const url = `${sanitized}/api/wa-direct/sessions${param ? `?${param}` : ''}`;
 
-    const newSession: Session = {
-      id: sessions.length + 1,
-      name: sessionName.trim(),
-      alias: `Alias ${sessions.length + 1}`,
-      phoneNumber: `+123456789${sessions.length + 1}`,
-      isActive: false
-    };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ name: trimmedName }),
+      });
 
-    setSessions([...sessions, newSession]);
-    setSessionName('');
-    toast({
-      title: "Sesión creada",
-      description: `Sesión "${newSession.name}" creada exitosamente`,
-    });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const message = payload?.detail || payload?.message || 'No se pudo crear la sesión';
+        toast({ title: 'Error', description: String(message), variant: 'destructive' });
+        return;
+      }
+
+      setSessionName('');
+      toast({ title: 'Sesión creada', description: `Sesión "${trimmedName}" creada exitosamente` });
+      fetchSessions();
+    } catch {
+      toast({ title: 'Error de red', description: 'No se pudo contactar con el servidor', variant: 'destructive' });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const performAction = async (sessionName: string, action: 'start' | 'stop' | 'restart') => {
@@ -172,8 +192,7 @@ export const InstancePage = () => {
     setIsActionLoading(prev => ({ ...prev, [`${sessionName}:${action}`]: true }));
     try {
       const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
-      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
-      const sanitized = String(backendBase).replace(/\/$/, '');
+      const sanitized = getBackendBase();
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
       const url = `${sanitized}/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/${action}${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
@@ -223,8 +242,7 @@ export const InstancePage = () => {
     setQrModalOpen(true);
     try {
       const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
-      const backendBase = (import.meta as any).env?.VITE_BACKEND_BASE_URL || 'https://saasback.getquickzap.com';
-      const sanitized = String(backendBase).replace(/\/$/, '');
+      const sanitized = getBackendBase();
       const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
       const url = `${sanitized}/api/wa-direct/sessions/${encodeURIComponent(sessionName)}/auth/qr${param ? `?${param}` : ''}`;
       const response = await fetch(url, {
@@ -328,9 +346,9 @@ export const InstancePage = () => {
                 onChange={(e) => setSessionName(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && createSession()}
               />
-              <Button onClick={createSession} className="flex items-center gap-2">
+              <Button onClick={createSession} className="flex items-center gap-2" disabled={isCreating}>
                 <Plus className="h-4 w-4" />
-                Crear sesión
+                {isCreating ? 'Creando...' : 'Crear sesión'}
               </Button>
             </div>
           </div>
@@ -354,14 +372,6 @@ export const InstancePage = () => {
                         <Badge variant={variant}>{label}</Badge>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => performAction(session.name, 'start')}
-                          disabled={active || isActionLoading[`${session.name}:start`]}
-                        >
-                          <Play className="h-3 w-3" />
-                        </Button>
                         <Button
                           size="sm"
                           variant="outline"

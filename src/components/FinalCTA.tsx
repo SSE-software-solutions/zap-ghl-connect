@@ -32,10 +32,10 @@ const FinalCTA = () => {
             <Button
               variant="hero-white"
               size="xl"
-              onClick={() => navigate('/register')}
+              onClick={() => scrollToSection('pricing')}
               className="shadow-xl hover:shadow-2xl"
             >
-              Comenzar Prueba Gratuita
+              Comenzar Ahora
             </Button>
           </div>
         </div>

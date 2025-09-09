@@ -46,10 +46,10 @@ const Hero = () => {
               <Button
                 variant="hero"
                 size="xl"
-                onClick={() => navigate('/register')}
+                onClick={() => scrollToSection('pricing')}
                 className="shadow-whatsapp hover:shadow-whatsapp-hover"
               >
-                {t('hero.cta')}
+                Comenzar Ahora
               </Button>
             </div>
 

@@ -11,61 +11,66 @@ interface PricingPlan {
   features: string[];
   buttonText: string;
   featured?: boolean;
+  url?: string;
 }
 
 const plans: PricingPlan[] = [
   {
     name: 'Starter',
     badge: 'Starter Plan',
-    subtitle: 'Para pequeñas empresas en crecimiento',
+    subtitle: '5 días Gratis',
     price: '$29',
-    period: '/mes',
-    buttonText: 'Comenzar 5 días gratis →',
+    period: ' USD',
+    buttonText: 'Comenzar Ahora →',
+    url: 'https://whop.com/checkout/plan_RCuRQjVCBia2J?d2c=true',
     features: [
-      'Hasta 3 subcuentas',
+      '1 subcuenta',
       '10 números de WhatsApp por subcuenta',
       'Mensajes ilimitados',
       'Whitelabel',
       'Soporte Premium',
       'Sin cobros ocultos',
-      'Nodo para N8N',
+      'Nodo para envío de mensajes desde N8N',
       'Comunidad para Soporte'
     ]
   },
   {
     name: 'Master',
     badge: 'Más Popular',
-    subtitle: 'Para empresas en expansión',
-    price: '$297',
-    period: '/mes',
-    buttonText: 'Elegir Master Plan →',
+    subtitle: 'Sin free trial',
+    price: '$197',
+    period: ' USD',
+    buttonText: 'Comprar Ahora →',
     featured: true,
+    url: 'https://whop.com/checkout/plan_3RmqmTk6y9FXI?d2c=true',
     features: [
       'Hasta 10 subcuentas',
-      '20 números de WhatsApp por subcuenta',
-      'Mensajes ilimitados',
-      'Whitelabel',
       'Soporte Premium',
+      'Whitelabel',
+      'Hasta 20 números de WhatsApp por subcuenta (total de 200 números)',
+      'Mensajes ilimitados',
       'Sin cobros ocultos',
-      'Nodo para N8N',
+      'Nodo para envío de mensajes desde N8N',
       'Comunidad para Soporte'
     ]
   },
   {
-    name: 'Enterprise',
+    name: 'Agency',
     badge: 'Enterprise',
-    subtitle: 'Para operaciones de gran escala',
+    subtitle: 'Sin free trial',
     price: '$397',
-    period: '/mes',
-    buttonText: 'Agendar demo →',
+    period: ' USD',
+    buttonText: 'Comprar Ahora →',
+    url: 'https://whop.com/checkout/plan_dUcmb1LKWivoW?d2c=true',
     features: [
       'Subcuentas ilimitadas',
-      'Números ilimitados por subcuenta',
-      'Mensajes ilimitados',
-      'Whitelabel',
       'Soporte VIP',
+      'Servidor propio',
+      'Whitelabel',
+      'Números ilimitados de WhatsApp por subcuenta',
+      'Mensajes ilimitados',
       'Sin cobros ocultos',
-      'Nodo para N8N',
+      'Nodo para envío de mensajes desde N8N',
       'Comunidad para Soporte'
     ]
   }
@@ -141,7 +146,7 @@ const Pricing = () => {
               <Button
                 variant={plan.featured ? "whatsapp" : "whatsapp-outline"}
                 className="w-full mb-8 h-12"
-                onClick={() => navigate('/register')}
+                onClick={() => plan.url && window.open(plan.url, '_blank')}
               >
                 {plan.buttonText}
               </Button>

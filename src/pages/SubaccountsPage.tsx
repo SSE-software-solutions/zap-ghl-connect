@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, MoreHorizontal, ExternalLink, Trash2, Copy, Zap, RefreshCw, Users, Link2 } from 'lucide-react';
+import { Eye, EyeOff, MoreHorizontal, ExternalLink, Trash2, Copy, Zap, Users, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -549,18 +549,7 @@ export const SubaccountsPage = () => {
                         <Zap className="h-4 w-4 mr-2" />
                         Connect to GHL
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedSyncInstance(instance);
-                          setSelectedSession('default');
-                          setIsSyncModalOpen(true);
-                          fetchInstanceSessions(instance);
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Sync contacts
-                      </DropdownMenuItem>
+                      
                       <DropdownMenuItem
                         onClick={async (e) => {
                           e.stopPropagation();
@@ -708,41 +697,7 @@ export const SubaccountsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Sync Contacts Modal */}
-      <Dialog open={isSyncModalOpen} onOpenChange={setIsSyncModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sync contacts</DialogTitle>
-            <DialogDescription>
-              Select the WAHA session to sync contacts to.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label>Session</Label>
-            <Select value={selectedSession} onValueChange={setSelectedSession}>
-              <SelectTrigger>
-                <SelectValue placeholder={isLoadingSessions ? 'Loading sessions…' : 'Select session'} />
-              </SelectTrigger>
-              <SelectContent>
-                {(isLoadingSessions ? [] : (syncSessions.length ? syncSessions : ['default']))
-                .map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSyncModalOpen(false)} disabled={isSyncing}>
-              Cancel
-            </Button>
-            <Button onClick={syncContacts} disabled={isSyncing}>
-              {isSyncing ? 'Syncing…' : 'Sync'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
 
       {/* Connect Staff To Session Modal */}
       <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>

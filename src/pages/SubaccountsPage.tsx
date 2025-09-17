@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, MoreHorizontal, ExternalLink, Trash2, Copy, Zap } from 'lucide-react';
+import { Eye, EyeOff, MoreHorizontal, ExternalLink, Trash2, Copy, Zap, RefreshCw, Users, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/hooks/use-toast';
 import { encryptPayload } from '@/lib/secure-link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Instance {
   id: number;
@@ -20,11 +21,21 @@ interface Instance {
   instance_port: number;
   webhook_url: string;
   is_connected: boolean;
+  sessions?: string[];
+}
+
+interface StaffMember {
+  id: number | string;
+  name: string;
+  email: string;
+  is_active: boolean;
 }
 
 export const SubaccountsPage = () => {
   const [instances, setInstances] = useState<Instance[]>([]);
+  const [maxInstances, setMaxInstances] = useState<number | null>(null);
   const [selectedInstance, setSelectedInstance] = useState<Instance | null>(null);
+  // Removed detail sheet; keep state unused for backward compatibility if any handler still references
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGhlModalOpen, setIsGhlModalOpen] = useState(false);
@@ -35,11 +46,60 @@ export const SubaccountsPage = () => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [visibleApiKeys, setVisibleApiKeys] = useState<Record<number, boolean>>({});
   const [isCreating, setIsCreating] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [selectedSyncInstance, setSelectedSyncInstance] = useState<Instance | null>(null);
+  const [selectedSession, setSelectedSession] = useState<string>('default');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncSessions, setSyncSessions] = useState<string[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [staffByInstance, setStaffByInstance] = useState<Record<number, { loading: boolean; items: StaffMember[] }>>({});
+  const [syncingStaff, setSyncingStaff] = useState<Record<number, boolean>>({});
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [connectInstance, setConnectInstance] = useState<Instance | null>(null);
+  const [connectAssignments, setConnectAssignments] = useState<{ staffId: string; staffName: string; email: string; sessionName: string }[]>([]);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectAvailableSessions, setConnectAvailableSessions] = useState<string[]>([]);
+  const [selectedSessionByStaff, setSelectedSessionByStaff] = useState<Record<string, string>>({});
+  const [assignLoadingByStaff, setAssignLoadingByStaff] = useState<Record<string, boolean>>({});
 
   const getApiBase = () => {
     const raw = (import.meta as any).env?.VITE_API_BASE_URL || 'https://fair-turkey-quickly.ngrok-free.app';
     const withProtocol = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
     return withProtocol(String(raw)).replace(/\/$/, '');
+  };
+
+  const syncContacts = async () => {
+    if (!selectedSyncInstance) return;
+    try {
+      setIsSyncing(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({ title: 'Not authenticated', description: 'Please sign in again', variant: 'destructive' });
+        setIsSyncing(false);
+        return;
+      }
+      const sanitizedBase = getApiBase();
+      const sessionToUse = selectedSession || 'default';
+      const url = `${sanitizedBase}/api/instances/${encodeURIComponent(String(selectedSyncInstance.id))}/sync-contacts?session=${encodeURIComponent(sessionToUse)}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('sync-failed');
+      }
+      toast({ title: 'Sync started', description: 'Runs in background and returns immediately.' });
+      setIsSyncModalOpen(false);
+    } catch {
+      toast({ title: 'Error', description: 'Could not start sync', variant: 'destructive' });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const generateLocationId = (id: number) => {
@@ -50,10 +110,10 @@ export const SubaccountsPage = () => {
   const createInstance = async () => {
     try {
       setIsCreating(true);
-      setIsCreateModalOpen(false); // cerrar inmediatamente
+      setIsCreateModalOpen(false); // close immediately
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        toast({ title: 'No autenticado', description: 'Inicia sesión nuevamente', variant: 'destructive' });
+        toast({ title: 'Not authenticated', description: 'Please sign in again', variant: 'destructive' });
         setIsCreating(false);
         return;
       }
@@ -71,7 +131,7 @@ export const SubaccountsPage = () => {
 
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Could not create instance', variant: 'destructive' });
         setIsCreating(false);
         return;
       }
@@ -88,9 +148,9 @@ export const SubaccountsPage = () => {
       };
 
       setInstances(prev => [newInstance, ...prev]);
-      toast({ title: 'Instancia creada', description: 'Tu nueva instancia ha sido creada exitosamente' });
+      toast({ title: 'Instance created', description: 'Your new instance was created successfully' });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo crear la instancia', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not create instance', variant: 'destructive' });
       setIsCreating(false);
     }
   };
@@ -101,7 +161,7 @@ export const SubaccountsPage = () => {
       setConnectUrl('');
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        toast({ title: 'No autenticado', description: 'Inicia sesión nuevamente', variant: 'destructive' });
+        toast({ title: 'Not authenticated', description: 'Please sign in again', variant: 'destructive' });
         setIsConnecting(false);
         return;
       }
@@ -120,12 +180,210 @@ export const SubaccountsPage = () => {
       if (destination && /^https?:\/\//i.test(destination)) {
         setConnectUrl(destination);
       } else {
-        toast({ title: 'Error', description: 'No se recibió la URL de autorización', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Authorization URL was not received', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'No se pudo obtener la URL de autorización', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not fetch authorization URL', variant: 'destructive' });
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const fetchInstanceSessions = async (instance: Instance) => {
+    try {
+      setIsLoadingSessions(true);
+      setSyncSessions([]);
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      const sanitizedBase = getApiBase();
+      // Prefer instance name; backend also accepts instanceId
+      const params = instance.instance_name
+        ? `instanceName=${encodeURIComponent(instance.instance_name)}`
+        : `instanceId=${encodeURIComponent(String(instance.id))}`;
+      const url = `${sanitizedBase}/api/instances/sessions?${params}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      const data = await response.json().catch(() => []);
+      if (!response.ok) return;
+      if (Array.isArray(data)) {
+        const names = data
+          .map((s: any) => (typeof s?.name === 'string' ? s.name : null))
+          .filter(Boolean);
+        setSyncSessions(names.length ? names : ['default']);
+        setSelectedSession((names[0] as string) || 'default');
+      }
+    } catch {
+      setSyncSessions(['default']);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  const toggleRow = async (instance: Instance) => {
+    const id = instance.id;
+    // Block expand if disconnected
+    if (!instance.is_connected) {
+      toast({ title: 'Conecta a GHL', description: 'Debes conectar la instancia a GHL antes de acceder al staff.' });
+      return;
+    }
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+    // fetch staff only if opening and not loaded yet
+    if (!expandedRows[id] && !staffByInstance[id]) {
+      try {
+        setStaffByInstance(prev => ({ ...prev, [id]: { loading: true, items: [] } }));
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setStaffByInstance(prev => ({ ...prev, [id]: { loading: false, items: [] } }));
+          return;
+        }
+        const base = getApiBase();
+        const param = instance.instance_name ? `instanceName=${encodeURIComponent(instance.instance_name)}` : `instanceId=${encodeURIComponent(String(instance.id))}`;
+        const url = `${base}/api/staff/?${param}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        const data = await response.json().catch(() => []);
+        const items: StaffMember[] = Array.isArray(data)
+          ? data.map((d: any) => ({ id: d?.id ?? String(d?.ghl_user_id ?? ''), name: String(d?.name || ''), email: String(d?.email || ''), is_active: Boolean(d?.is_active) }))
+          : [];
+        setStaffByInstance(prev => ({ ...prev, [id]: { loading: false, items } }));
+      } catch {
+        setStaffByInstance(prev => ({ ...prev, [id]: { loading: false, items: [] } }));
+      }
+    }
+  };
+
+  const syncStaffFromGhl = async (instance: Instance) => {
+    try {
+      setSyncingStaff(prev => ({ ...prev, [instance.id]: true }));
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      const base = getApiBase();
+      const param = instance.instance_name ? `instanceName=${encodeURIComponent(instance.instance_name)}` : `instanceId=${encodeURIComponent(String(instance.id))}`;
+      const url = `${base}/api/staff/sync-from-ghl?${param}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      if (!response.ok) {
+        toast({ title: 'Error', description: 'Could not sync staff', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Staff synced', description: 'The staff list was synchronized from GHL' });
+      // refresh list
+      await toggleRow(instance); // closes
+      await toggleRow(instance); // reopens and fetches
+    } catch {
+      toast({ title: 'Error', description: 'Failed to sync staff', variant: 'destructive' });
+    } finally {
+      setSyncingStaff(prev => ({ ...prev, [instance.id]: false }));
+    }
+  };
+
+  const openConnectStaffModal = async (instance: Instance) => {
+    try {
+      setIsConnectModalOpen(true);
+      setConnectInstance(instance);
+      setConnectLoading(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) { setConnectLoading(false); return; }
+      const base = getApiBase();
+      const url = `${base}/api/staff/sessions`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      const data = await response.json().catch(() => []);
+      const staffList = staffByInstance[instance.id]?.items || [];
+      const assignments = staffList.map((s) => {
+        const match = Array.isArray(data) ? data.find((rec: any) => String(rec?.assigned_staff_id) === String(s.id) && Number(rec?.instance_id) === Number(instance.id)) : null;
+        const sessionName = match?.session_name ? String(match.session_name) : '—';
+        return { staffId: String(s.id), staffName: s.name || '—', email: s.email || '—', sessionName };
+      });
+      setConnectAssignments(assignments);
+
+      // fetch all sessions of this instance to compute available ones
+      try {
+        const params = instance.instance_name
+          ? `instanceName=${encodeURIComponent(instance.instance_name)}`
+          : `instanceId=${encodeURIComponent(String(instance.id))}`;
+        const sessionsResp = await fetch(`${base}/api/instances/sessions?${params}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        const sessionsData = await sessionsResp.json().catch(() => []);
+        const allNames: string[] = Array.isArray(sessionsData)
+          ? sessionsData.map((s: any) => String(s?.name || s?.session_name || '')).filter(Boolean)
+          : [];
+        const used = new Set(assignments.map(a => a.sessionName).filter(n => n && n !== '—'));
+        const available = allNames.filter(n => !used.has(n));
+        setConnectAvailableSessions(available);
+        const initial: Record<string, string> = {};
+        assignments.filter(a => a.sessionName === '—').forEach(a => { initial[a.staffId] = available[0] || ''; });
+        setSelectedSessionByStaff(initial);
+      } catch {
+        setConnectAvailableSessions([]);
+      }
+    } catch {
+      setConnectAssignments([]);
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  const linkStaffToSession = async (staffId: string) => {
+    if (!connectInstance) return;
+    const sessionName = selectedSessionByStaff[staffId];
+    if (!sessionName) return;
+    try {
+      setAssignLoadingByStaff(prev => ({ ...prev, [staffId]: true }));
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      const base = getApiBase();
+      const paramInst = connectInstance.instance_name ? `instanceName=${encodeURIComponent(connectInstance.instance_name)}` : `instanceId=${encodeURIComponent(String(connectInstance.id))}`;
+      const url = `${base}/api/staff/sessions/link?${paramInst}&sessionName=${encodeURIComponent(sessionName)}&staffId=${encodeURIComponent(staffId)}`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      if (!resp.ok) {
+        toast({ title: 'Error', description: 'Could not link staff to session', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Linked', description: 'Staff assigned to session' });
+      // refresh modal data
+      await openConnectStaffModal(connectInstance);
+    } catch {
+      toast({ title: 'Error', description: 'Failed to link staff', variant: 'destructive' });
+    } finally {
+      setAssignLoadingByStaff(prev => ({ ...prev, [staffId]: false }));
     }
   };
 
@@ -135,13 +393,13 @@ export const SubaccountsPage = () => {
       // Mock API call
       setInstances(prev => prev.filter(inst => inst.id !== id));
       toast({
-        title: 'Instancia eliminada',
-        description: 'La instancia ha sido eliminada exitosamente',
+        title: 'Instance deleted',
+        description: 'The instance has been deleted successfully',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'No se pudo eliminar la instancia',
+        description: 'Could not delete instance',
         variant: 'destructive',
       });
     } finally {
@@ -152,12 +410,15 @@ export const SubaccountsPage = () => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copiado",
-      description: "Texto copiado al portapapeles",
+      title: "Copied",
+      description: "Text copied to clipboard",
     });
   };
 
   useEffect(() => {
+    // read max instances from localStorage
+    const storedMax = localStorage.getItem('auth_max_instances');
+    setMaxInstances(storedMax ? Number(storedMax) : null);
     const fetchInstances = async () => {
       try {
         const token = localStorage.getItem('auth_token');
@@ -183,6 +444,7 @@ export const SubaccountsPage = () => {
             instance_port: Number(d?.instance_port ?? 0),
             webhook_url: d?.webhook_url ?? '',
             is_connected: Boolean(d?.is_connected ?? false),
+            sessions: Array.isArray(d?.sessions) ? d.sessions.map((s: any) => String(s)) : (d?.sessions ? [String(d.sessions)] : ['default']),
           }));
           setInstances(mapped);
         }
@@ -213,7 +475,7 @@ export const SubaccountsPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90" disabled={isCreating}>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="bg-primary hover:bg-primary/90" disabled={isCreating || (typeof maxInstances === 'number' && instances.length >= maxInstances)}>
             Create Instance
           </Button>
         </div>
@@ -237,18 +499,10 @@ export const SubaccountsPage = () => {
           </TableHeader>
           <TableBody>
             {instances.map((instance) => (
-              <TableRow key={instance.id}>
+              <>
+              <TableRow key={instance.id} className="cursor-pointer" onClick={() => toggleRow(instance)}>
                 <TableCell>
-                  <Button 
-                    variant="link" 
-                    className="text-primary p-0 h-auto font-medium"
-                    onClick={() => {
-                      setSelectedInstance(instance);
-                      setIsDetailOpen(true);
-                    }}
-                  >
-                    {instance.instance_name}
-                  </Button>
+                  <span className="text-primary font-medium">{instance.instance_name}</span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -259,11 +513,11 @@ export const SubaccountsPage = () => {
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0"
-                      onClick={() => setVisibleApiKeys(prev => ({ ...prev, [instance.id]: !prev[instance.id] }))}
+                      onClick={(e) => { e.stopPropagation(); setVisibleApiKeys(prev => ({ ...prev, [instance.id]: !prev[instance.id] })); }}
                     >
                       {visibleApiKeys[instance.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => copyToClipboard(instance.api_key)}>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); copyToClipboard(instance.api_key); }}>
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
@@ -279,13 +533,14 @@ export const SubaccountsPage = () => {
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedConnectInstanceName(instance.instance_name);
                           setIsGhlModalOpen(true);
                           fetchConnectUrl(instance.instance_name);
@@ -295,7 +550,20 @@ export const SubaccountsPage = () => {
                         Connect to GHL
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={async () => {
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSyncInstance(instance);
+                          setSelectedSession('default');
+                          setIsSyncModalOpen(true);
+                          fetchInstanceSessions(instance);
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Sync contacts
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async (e) => {
+                          e.stopPropagation();
                           const extractBaseFromInstanceUrl = (url?: string) => {
                             if (!url) return '';
                             const match = url.match(/^https?:\/\/[^/]+/i);
@@ -325,7 +593,7 @@ export const SubaccountsPage = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-destructive focus:text-destructive"
-                        onClick={() => deleteInstance(instance.id)}
+                        onClick={(e) => { e.stopPropagation(); deleteInstance(instance.id); }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete account
@@ -334,6 +602,45 @@ export const SubaccountsPage = () => {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
+              {expandedRows[instance.id] && (
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    <div className="p-4 rounded-md">
+                      <div className="text-sm font-medium mb-2 flex items-center justify-between">
+                        <span>Staff</span>
+                        <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openConnectStaffModal(instance); }}>
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Connect staff to session
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); syncStaffFromGhl(instance); }} disabled={!!syncingStaff[instance.id]}>
+                          <Users className="h-4 w-4 mr-2" />
+                          {syncingStaff[instance.id] ? 'Syncing…' : 'Sync staff'}
+                        </Button>
+                        </div>
+                      </div>
+                      {staffByInstance[instance.id]?.loading ? (
+                        <div className="text-sm text-muted-foreground">Loading staff…</div>
+                      ) : (staffByInstance[instance.id]?.items?.length ? (
+                        <div className="space-y-2">
+                          {staffByInstance[instance.id].items.map((m, idx) => (
+                            <div key={idx} className="flex items-center justify-between border rounded px-3 py-2 bg-background">
+                              <div>
+                                <div className="font-medium">{m.name || '—'}</div>
+                                <div className="text-xs text-muted-foreground">{m.email || '—'}</div>
+                              </div>
+                              <div className={`text-xs ${m.is_active ? 'text-green-600' : 'text-gray-500'}`}>{m.is_active ? 'Active' : 'Inactive'}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No staff found</div>
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+              </>
             ))}
           </TableBody>
         </Table>
@@ -354,101 +661,7 @@ export const SubaccountsPage = () => {
         </div>
       </div>
 
-      {/* Instance Detail Sheet */}
-      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent className="w-96">
-          <SheetHeader>
-            <SheetTitle>Instance Details</SheetTitle>
-            <SheetDescription>
-              {selectedInstance?.instance_name}
-            </SheetDescription>
-          </SheetHeader>
-          
-          {selectedInstance && (
-            <div className="space-y-4 mt-6">
-              <div className="space-y-2">
-                <Label>Instance Name</Label>
-                <div className="p-2 bg-muted rounded text-sm">
-                  {selectedInstance.instance_name}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Instance URL</Label>
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-muted rounded text-sm flex-1 font-mono">
-                    {selectedInstance.instance_url}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => window.open(selectedInstance.instance_url, '_blank')}>
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>API Key</Label>
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-muted rounded text-sm flex-1 font-mono">
-                    {showApiKey ? selectedInstance.api_key : '••••••••••••••••'}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowApiKey(!showApiKey)}
-                  >
-                    {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => copyToClipboard(selectedInstance.api_key)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Internal URL</Label>
-                  <div className="p-2 bg-muted rounded text-sm font-mono">
-                    {selectedInstance.internal_url}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Port</Label>
-                  <div className="p-2 bg-muted rounded text-sm font-mono">
-                    {selectedInstance.instance_port}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Webhook URL</Label>
-                <div className="p-2 bg-muted rounded text-sm font-mono">
-                  {selectedInstance.webhook_url}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Connection Status</Label>
-                <Badge variant={selectedInstance.is_connected ? "default" : "secondary"}>
-                  {selectedInstance.is_connected ? 'Connected' : 'Not Connected'}
-                </Badge>
-              </div>
-
-              <Button 
-                onClick={() => setIsGhlModalOpen(true)}
-                disabled={selectedInstance.is_connected}
-                className="w-full"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                {selectedInstance.is_connected ? 'Already Connected' : 'Connect to GHL'}
-              </Button>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Removed Instance Detail Sheet */}
 
       {/* Create Instance Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
@@ -476,22 +689,105 @@ export const SubaccountsPage = () => {
           <DialogHeader>
             <DialogTitle>Connect to GoHighLevel</DialogTitle>
             <DialogDescription>
-              Autoriza QuickZap en GoHighLevel. Abre la autorización en una nueva pestaña.
+              Authorize QuickZap in GoHighLevel. This will open a new tab for authorization.
             </DialogDescription>
           </DialogHeader>
 
           <div className="text-sm text-muted-foreground">
-            {isConnecting ? 'Obteniendo URL de autorización...' : (connectUrl ? 'URL lista para abrir.' : 'No se pudo obtener la URL. Intenta nuevamente.')}
+            {isConnecting ? 'Fetching authorization URL…' : (connectUrl ? 'Authorization URL is ready.' : 'Failed to get the URL. Try again.')}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsGhlModalOpen(false)}>
-              Cerrar
+              Close
             </Button>
             <Button onClick={() => connectUrl && window.open(connectUrl, '_blank', 'noopener,noreferrer')} disabled={!connectUrl || isConnecting}>
-              Abrir en nueva pestaña
+              Open in new tab
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Contacts Modal */}
+      <Dialog open={isSyncModalOpen} onOpenChange={setIsSyncModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sync contacts</DialogTitle>
+            <DialogDescription>
+              Select the WAHA session to sync contacts to.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label>Session</Label>
+            <Select value={selectedSession} onValueChange={setSelectedSession}>
+              <SelectTrigger>
+                <SelectValue placeholder={isLoadingSessions ? 'Loading sessions…' : 'Select session'} />
+              </SelectTrigger>
+              <SelectContent>
+                {(isLoadingSessions ? [] : (syncSessions.length ? syncSessions : ['default']))
+                .map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSyncModalOpen(false)} disabled={isSyncing}>
+              Cancel
+            </Button>
+            <Button onClick={syncContacts} disabled={isSyncing}>
+              {isSyncing ? 'Syncing…' : 'Sync'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connect Staff To Session Modal */}
+      <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connect staff to session</DialogTitle>
+            <DialogDescription>Shows the current session assigned per staff member in this instance.</DialogDescription>
+          </DialogHeader>
+          {connectLoading ? (
+            <div className="text-sm text-muted-foreground">Loading assignments…</div>
+          ) : (
+            <div className="space-y-2">
+              {connectAssignments.length ? (
+                connectAssignments.map((a, idx) => (
+                  <div key={idx} className="flex items-center justify-between border rounded px-3 py-2 bg-background gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate">{a.staffName}</div>
+                      <div className="text-xs text-muted-foreground truncate">{a.email}</div>
+                    </div>
+                    {a.sessionName === '—' ? (
+                      <div className="flex items-center gap-2">
+                        <Select value={selectedSessionByStaff[a.staffId] || ''} onValueChange={(v) => setSelectedSessionByStaff(prev => ({ ...prev, [a.staffId]: v }))}>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder={connectAvailableSessions.length ? 'Select session' : 'No sessions'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {connectAvailableSessions.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" onClick={() => linkStaffToSession(a.staffId)} disabled={!selectedSessionByStaff[a.staffId] || !!assignLoadingByStaff[a.staffId]}>
+                          {assignLoadingByStaff[a.staffId] ? 'Assigning…' : 'Assign'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-xs">{a.sessionName}</div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">No data</div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -4,6 +4,7 @@ import {
   Rocket, 
   Building2, 
   BookOpen,
+  Settings,
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
@@ -14,7 +15,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const sidebarItems = [
   { title: 'Launchpad', icon: Rocket, path: '/dashboard' },
   { title: 'Subaccounts', icon: Building2, path: '/dashboard/subaccounts' },
-  { title: 'Tutoriales', icon: BookOpen, externalUrl: 'https://whop.com/joined/quickzap/tutoriales-jj8kntN8fIjX9e/app' },
+  { title: 'Tutorials', icon: BookOpen, externalUrl: 'https://whop.com/joined/quickzap/tutoriales-jj8kntN8fIjX9e/app' },
+  { title: 'Account settings', icon: Settings, path: '/dashboard/account' },
 ];
 
 export const DashboardSidebar = () => {
@@ -50,6 +52,11 @@ export const DashboardSidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 p-2">
+        {localStorage.getItem('auth_is_active') === 'false' ? (
+          <div className="text-sm text-muted-foreground px-3 py-2">
+            Your account is inactive. Please contact support.
+          </div>
+        ) : (
         <div className="space-y-1">
           {sidebarItems.map((item) => {
             const isActive = item.path && (location.pathname === item.path || 
@@ -90,6 +97,7 @@ export const DashboardSidebar = () => {
             );
           })}
         </div>
+        )}
       </nav>
 
       {/* Footer */}

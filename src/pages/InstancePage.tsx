@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { QrCode, Play, Square, RotateCcw, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { QrCode, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Session {
@@ -33,6 +33,8 @@ export const InstancePage = () => {
   const [instanceName, setInstanceName] = useState<string>('');
   const [appToken, setAppToken] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const getBackendBase = () => {
     const raw = (import.meta as any).env?.VITE_API_BASE_URL || 'https://saasback.getquickzap.com';
@@ -216,6 +218,36 @@ export const InstancePage = () => {
     }
   };
 
+  const deleteSession = async (name: string) => {
+    if (!baseUrl || !apiKey) return;
+    setIsActionLoading(prev => ({ ...prev, [`${name}:delete`]: true }));
+    try {
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
+      const sanitized = getBackendBase();
+      const param = instanceName ? `instanceName=${encodeURIComponent(instanceName)}` : (instanceId ? `instanceId=${encodeURIComponent(instanceId)}` : '');
+      const url = `${sanitized}/api/wa-direct/sessions/${encodeURIComponent(name)}${param ? `?${param}` : ''}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        toast({ title: 'Error', description: 'No se pudo eliminar la sesión', variant: 'destructive' });
+      } else {
+        toast({ title: 'Sesión eliminada', description: 'La sesión fue eliminada correctamente' });
+      }
+    } catch {
+      toast({ title: 'Error de red', description: 'No se pudo contactar con la instancia', variant: 'destructive' });
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [`${name}:delete`]: false }));
+      setIsDeleteOpen(false);
+      setDeleteTarget(null);
+      fetchSessions();
+    }
+  };
+
   const isActiveStatus = (status?: string) => {
     if (!status) return false;
     const s = status.toUpperCase();
@@ -374,11 +406,11 @@ export const InstancePage = () => {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => performAction(session.name, 'stop')}
-                          disabled={!active || isActionLoading[`${session.name}:stop`]}
+                          variant="destructive"
+                          onClick={() => { setDeleteTarget(session.name); setIsDeleteOpen(true); }}
+                          disabled={isActionLoading[`${session.name}:delete`]}
                         >
-                          <Square className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm"
@@ -392,7 +424,7 @@ export const InstancePage = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => generateQR(session.name)}
-                          disabled={(() => { const st = session.status?.toUpperCase(); return !(st === 'SCAN_QR_CODE' || st === 'STARTING'); })()}
+                          disabled={(() => { const st = session.status?.toUpperCase(); return st !== 'SCAN_QR_CODE'; })()}
                         >
                           <QrCode className="h-3 w-3" />
                         </Button>
@@ -428,6 +460,26 @@ export const InstancePage = () => {
               )}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Session Confirm Modal */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar sesión</DialogTitle>
+            <DialogDescription>
+              ¿Estas seguro que quieres eliminar la sesión "{deleteTarget}"? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={() => deleteSession(deleteTarget || '')} disabled={!deleteTarget || isActionLoading[`${deleteTarget}:delete`]}>
+              Eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

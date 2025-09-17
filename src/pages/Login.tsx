@@ -72,6 +72,11 @@ const Login = () => {
       const token = data?.access_token || data?.token || data?.accessToken || data?.jwt || data?.data?.token;
       const tokenType: string | undefined = data?.token_type;
       const usernameResp: string | undefined = data?.username || data?.user || data?.email || '';
+      const isAdmin: boolean = Boolean(data?.is_admin);
+      const isActive: boolean = data?.is_active === undefined ? true : Boolean(data?.is_active);
+      const plan: string | undefined = data?.plan || data?.subscription || '';
+      const maxInstances: number | undefined = typeof data?.max_instances === 'number' ? data?.max_instances : undefined;
+      const trialEndsAt: string | null | undefined = data?.trial_ends_at ?? null;
       if (!token) {
         toast({
           title: "Error",
@@ -88,11 +93,23 @@ const Login = () => {
       if (usernameResp) {
         localStorage.setItem('auth_username', String(usernameResp));
       }
+      localStorage.setItem('auth_is_admin', isAdmin ? 'true' : 'false');
+      localStorage.setItem('auth_is_active', isActive ? 'true' : 'false');
+      if (plan) {
+        localStorage.setItem('auth_plan', String(plan));
+      }
+      if (typeof maxInstances === 'number') {
+        localStorage.setItem('auth_max_instances', String(maxInstances));
+      }
+      if (trialEndsAt !== undefined) {
+        // store as string or "null"
+        localStorage.setItem('auth_trial_ends_at', trialEndsAt === null ? 'null' : String(trialEndsAt));
+      }
       toast({
         title: "Inicio de sesión exitoso",
         description: "Bienvenido al panel de cliente",
       });
-      navigate('/dashboard', { replace: true });
+      navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
       toast({
         title: "Error de red",

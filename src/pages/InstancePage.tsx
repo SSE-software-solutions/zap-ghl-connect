@@ -311,23 +311,6 @@ export const InstancePage = () => {
           <CardTitle className="text-center text-2xl font-bold">
             Dashboard de Instancias WhatsApp
           </CardTitle>
-          <div className="text-center text-sm text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <span>Base URL:</span>
-            <span className="font-mono">{baseUrl ? '••••••••••••••••' : 'No definida'}</span>
-            {baseUrl && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  const el = e.currentTarget.previousElementSibling as HTMLElement | null;
-                  if (!el) return;
-                  el.textContent = el.textContent === '••••••••••••••••' ? baseUrl : '••••••••••••••••';
-                }}
-              >
-                Mostrar
-              </Button>
-            )}
-          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Shareable encrypted link */}

@@ -408,7 +408,9 @@ export const InstancePage = () => {
                           size="sm"
                           variant="destructive"
                           onClick={() => { setDeleteTarget(session.name); setIsDeleteOpen(true); }}
-                          disabled={isActionLoading[`${session.name}:delete`]}
+                          disabled={true}
+                          aria-disabled
+                          title="Delete disabled for now"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

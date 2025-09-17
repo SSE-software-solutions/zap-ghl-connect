@@ -581,11 +581,11 @@ export const SubaccountsPage = () => {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
-                        className="text-destructive focus:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); deleteInstance(instance.id); }}
+                        className="text-muted-foreground cursor-not-allowed opacity-50"
+                        disabled
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete account
+                        Delete account (disabled)
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { QrCode, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { QrCode, RotateCcw, Plus, Trash2, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Session {
@@ -220,6 +220,10 @@ export const InstancePage = () => {
 
   const deleteSession = async (name: string) => {
     if (!baseUrl || !apiKey) return;
+    if (name === 'default') {
+      toast({ title: 'Acción no permitida', description: 'No puedes eliminar la sesión "default"', variant: 'destructive' });
+      return;
+    }
     setIsActionLoading(prev => ({ ...prev, [`${name}:delete`]: true }));
     try {
       const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
@@ -245,6 +249,41 @@ export const InstancePage = () => {
       setIsDeleteOpen(false);
       setDeleteTarget(null);
       fetchSessions();
+    }
+  };
+
+  const syncContacts = async (name: string) => {
+    if (!baseUrl || !apiKey || !instanceId) {
+      toast({ title: 'Faltan datos', description: 'No se encontró el instanceId para sincronizar', variant: 'destructive' });
+      return;
+    }
+    const key = `${name}:syncContacts`;
+    setIsActionLoading(prev => ({ ...prev, [key]: true }));
+    try {
+      const token = appToken || sessionStorage.getItem('instance_app_token') || localStorage.getItem('auth_token');
+      const sanitized = getBackendBase();
+      const qs = new URLSearchParams();
+      if (name && name !== '') {
+        // Solo pasamos "session"; no incluimos limit ni page_size para usar defaults
+        qs.set('session', name);
+      }
+      const url = `${sanitized}/api/instances/${encodeURIComponent(instanceId)}/sync-contacts${qs.toString() ? `?${qs.toString()}` : ''}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        toast({ title: 'Error', description: 'No se pudo iniciar la sincronización', variant: 'destructive' });
+      } else {
+        toast({ title: 'Sincronización iniciada', description: 'Se disparó la sincronización de contactos a GHL' });
+      }
+    } catch {
+      toast({ title: 'Error de red', description: 'No se pudo contactar con la instancia', variant: 'destructive' });
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -391,11 +430,19 @@ export const InstancePage = () => {
                           size="sm"
                           variant="destructive"
                           onClick={() => { setDeleteTarget(session.name); setIsDeleteOpen(true); }}
-                          disabled={true}
-                          aria-disabled
-                          title="Delete disabled for now"
+                          disabled={session.name === 'default' || isActionLoading[`${session.name}:delete`]}
+                          title={session.name === 'default' ? 'No se puede eliminar la sesión default' : 'Eliminar sesión'}
                         >
                           <Trash2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => syncContacts(session.name)}
+                          disabled={!instanceId || isActionLoading[`${session.name}:syncContacts`]}
+                          title={!instanceId ? 'Falta instanceId' : 'Sincronizar contactos a GHL'}
+                        >
+                          <Users className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm"
